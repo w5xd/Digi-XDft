@@ -11,3 +11,5 @@ See COPYING for the license. This code depends on that published for wsjtx-2.0.1
 This project also contains XDft8Test.exe which is an example of how to put the various pieces together into a working program.
 In addition to the submodule, you'll need the XDwsjtFT8.dll from the project <a href='https://github.com/w5xd/Digi-XDwsjt'>Digi-XDwsjt</a>.
 
+The .props files are designed to be edited to reflect the disk locations of the various needed components.
+
