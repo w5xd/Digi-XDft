@@ -1,5 +1,5 @@
 # Digi-XDft
-Copyright (c) 2019 by Wayne E. Wright, W5XD
+Copyright (c) 2019 by Wayne E. Wright, W5XD<br/>
 .NET wrappers for FT8 modulate and demodulate, including a sample program
 
 This project contains the XDft.dll .NET assembly which wraps the FT8 encoder/decoder by Joe Taylor, K1JT. This assembly,
