@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="clr">
+      <UniqueIdentifier>{00217624-425d-4d2e-bbaf-1d08a7df052a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="clr\Header Files">
+      <UniqueIdentifier>{16b9c290-ec60-4f58-870e-7aa26fa79426}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="clr\Source Files">
+      <UniqueIdentifier>{8212bdba-46f4-407a-8e30-c885ead091a0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="XDft8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringConvert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ft8Demod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ft8DemodImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemoryImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DemodulatorClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafxClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratorClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WsjtExe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WsjtSharedMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WsjtSharedMemoryClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WsjtExeClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WsjtExeImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioSink.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratorImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="XDft8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafxClr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ft8Demod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ft8DemodImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemoryImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DemodulatorClr.cpp">
+      <Filter>clr\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratorClr.cpp">
+      <Filter>clr\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WsjtExe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WsjtExeClr.cpp">
+      <Filter>clr\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WsjtSharedMemoryClr.cpp">
+      <Filter>clr\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WsjtSharedMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WsjtExeImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratorImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="app.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

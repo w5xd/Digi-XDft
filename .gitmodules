@@ -1,0 +1,3 @@
+[submodule "Digi-XD"]
+	path = Digi-XD
+	url = git@github.com:w5xd/Digi-XD.git

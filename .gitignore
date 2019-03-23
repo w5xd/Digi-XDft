@@ -1,0 +1,10 @@
+.vs
+*.swp
+*~
+*.zip
+*.user
+XDft8*Kit/
+*Debug/
+*Release/
+*obj/
+*.aps
