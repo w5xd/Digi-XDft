@@ -62,7 +62,7 @@ namespace XDft8Test
 " ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the following authors:" +
 " Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo," +
 " IV3NWV; Grea Bream, KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR; Philip Karn," +
-" KA9Q; and other memobers of the WSJT Development Group.\r\n\r\n" +
+" KA9Q; and other members of the WSJT Development Group.\r\n\r\n" +
 
 "The assembly under test, named XDft.dll, is authored and published by Wayne, W5XD. " +
 "This assembly presents a progammer's interface into a subset of the wsjtx feature set. In particular, " +
