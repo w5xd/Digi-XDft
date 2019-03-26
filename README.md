@@ -15,3 +15,5 @@ In addition to the submodule, you'll need the XDwsjtFT8.dll from the project <a 
 
 To build this project, expect to edit the .props files to reflect the disk locations of the various needed components.
 
+<img src='Screenshot1.png' alt='Screenshot1.png'/>
+
