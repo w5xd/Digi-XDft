@@ -93,8 +93,22 @@ namespace XDft8Test
                 deviceTx.SoundSyncCallback = new XD.SoundBeginEnd(AudioBeginEnd);
             }
             deviceTx.TransmitCycle = ft;
+#if !DEBUG
             XDft.Generator.Play(itone, (int)numericUpDownFrequency.Value,
                  deviceTx.GetRealTimeAudioSink());
+#else
+            List<XDft.Tone> tones = new List<XDft.Tone>();
+            tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
+
+            String sent = null;
+            bool[] ft8bits = null;
+            int[] it = null;
+            XDft.Generator.genft8(
+                            "TEST",
+                            ref sent, ref it, ref ft8bits);
+            tones.Add(new XDft.Tone(it, 1, (int)numericUpDownFrequency.Value + 100));
+            XDft.Generator.Play(tones.ToArray(), deviceTx.GetRealTimeAudioSink());
+#endif
         }
 
         private void buttonXmitNow_Click(object sender, EventArgs e)
@@ -168,8 +182,15 @@ namespace XDft8Test
             fd.Filter = "Wave Files (*.wav)|*.wav";
             if (fd.ShowDialog() == DialogResult.OK)
             {
+#if !DEBUG
                 XDft.Generator.Play(itone, (int)numericUpDownFrequency.Value,
                     XD.FileDeviceTx.Open(fd.FileName));
+#else
+                List<XDft.Tone> tones = new List<XDft.Tone>();
+                tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
+                tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value + 100));
+                XDft.Generator.Play(tones.ToArray(), XD.FileDeviceTx.Open(fd.FileName));
+#endif
             }
         }
 

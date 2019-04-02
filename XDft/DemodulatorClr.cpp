@@ -266,7 +266,12 @@ namespace XDft {
 
     void Demodulator::mycall::set(System::String ^v) {
         if (m_Ft8Demod->IsValid())
-            m_Ft8Demod->set_mycall(msclr::interop::marshal_as<std::string>(v));
+        {
+            std::string arg;
+            if (v != nullptr)
+                arg = msclr::interop::marshal_as<std::string>(v);
+            m_Ft8Demod->set_mycall(arg);
+        }
     }
 
     System::String^ Demodulator::hiscall::get() {
@@ -277,7 +282,12 @@ namespace XDft {
 
     void Demodulator::hiscall::set(System::String ^v) {
         if (m_Ft8Demod->IsValid())
-            m_Ft8Demod->set_hiscall(msclr::interop::marshal_as<std::string>(v));
+        {
+            std::string arg;
+            if (v != nullptr)
+                arg = msclr::interop::marshal_as<std::string>(v);
+            m_Ft8Demod->set_hiscall(arg);
+        }
     }
 
 }

@@ -14,6 +14,19 @@ namespace XDft {
     const int ThirtySeven = 37;
     const int SeventySeven = 77;
 
+    Tone::Tone() : coefficient(1.f)
+        , itone(nullptr)
+        , frequency(1000)
+    {
+    }
+
+    Tone::Tone(array<int>^ tones, float coef, int f)
+        : coefficient(coef)
+        , itone(tones)
+        , frequency(f)
+    {
+    }
+
 	void Generator::genft8(System::String ^msg, System::String ^%msgSent, 
 		array<int> ^%itoneOut, array<bool> ^%ft8bits)
 	{
@@ -138,6 +151,33 @@ namespace XDft {
                 memcpy(&itoneNative[0], pPin, sizeof(itoneNative[0]) * itoneNative.size());
             }
             impl::GeneratorImpl::Play(itoneNative, baseFrequency, pSink);
+        }
+        catch (const std::exception &e)
+        {   // convert c++ to clr exception
+            throw gcnew System::Exception(gcnew System::String(e.what()));
+        }
+    }
+
+    void Generator::Play(array<Tone^> ^itones, System::IntPtr outputSink)
+    {
+        std::shared_ptr<XD::AudioSink> pSink(
+            reinterpret_cast<XD::AudioSink*>(outputSink.ToPointer()), [](XD::AudioSink *p)
+        {
+            p->ReleaseSink();
+        });
+
+        try {
+            std::vector<impl::Tone> toPlay(itones->Length);
+            for (unsigned i = 0; i < static_cast<unsigned>(itones->Length); i++)
+            {
+                toPlay[i].coefficient = itones[i]->coefficient;
+                toPlay[i].frequency = itones[i]->frequency;
+                std::vector<int> &tones=toPlay[i].itone;
+                tones.resize(itones[i]->itone->Length);
+                pin_ptr<int> pPin = &itones[i]->itone[0];
+                memcpy(&tones[0], pPin, sizeof(tones[0]) * tones.size());
+            }
+            impl::GeneratorImpl::Play(toPlay, pSink);
         }
         catch (const std::exception &e)
         {   // convert c++ to clr exception

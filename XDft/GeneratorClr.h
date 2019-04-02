@@ -2,6 +2,14 @@
 namespace XDft {
     ref class WaveDeviceSink;
 
+    public ref class Tone {
+    public:
+        Tone();
+        Tone(array<int>^ tones, float coef, int frequency);
+        float coefficient;
+        array<int>^itone;
+        int frequency;
+    };
     public ref class Generator
 	{
 	public:
@@ -18,6 +26,7 @@ namespace XDft {
         static bool unpack77(array<bool>^c77, int forRx, System::String^%msg);
         static bool checkCall(System::String ^call, System::String ^%basecall);
         static void Play(array<int>^itone, int baseFrequency, System::IntPtr outputSink);
+        static void Play(array<Tone^> ^itones, System::IntPtr outputSink);
 
     protected:
 	};
