@@ -93,10 +93,10 @@ namespace XDft8Test
                 deviceTx.SoundSyncCallback = new XD.SoundBeginEnd(AudioBeginEnd);
             }
             deviceTx.TransmitCycle = ft;
-#if !DEBUG
+#if true
             XDft.Generator.Play(itone, (int)numericUpDownFrequency.Value,
                  deviceTx.GetRealTimeAudioSink());
-#else
+#else   // play multiple
             List<XDft.Tone> tones = new List<XDft.Tone>();
             tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
 
