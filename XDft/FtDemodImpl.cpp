@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "Ft8DemodImpl.h"
+#include "FtDemodImpl.h"
 #include <commons.h>
-#include <XDxmitFT8.h>
+#include <XDencode.h>
 #include "StringConvert.h"
 namespace XDft { namespace impl {
     // Ft8DemoImpl's main job is to pass parameters 
     // and waveform data
     // to the FT8 decoder via its common block
-	Ft8DemodImpl::Ft8DemodImpl()
+	FtDemodImpl::FtDemodImpl()
 		: m_FortranData(new struct dec_data) 
 		, m_TRperiod(15)
         , m_decSamplesWritten(0)
@@ -17,7 +17,7 @@ namespace XDft { namespace impl {
         , m_lastCalledBackIndex(0)
         , m_sampleCbInterval(0)
         , m_sampleCbCount(0)
-        , m_Ft8CycleNumber(-1)
+        , m_FtCycleNumber(-1)
 		, m_audioSampleCbThreadStop(false)
 	{ 
         memset(m_FortranData.get(), 0, sizeof(struct dec_data));
@@ -27,6 +27,7 @@ namespace XDft { namespace impl {
         m_FortranData->params.lft8apon = false;
         m_FortranData->params.nzhsym = 50; // setup in mainwindow.cpp
         m_FortranData->params.nagain = false;
+		m_FortranData->params.nmode = 8; // FT8
         memset(m_FortranData->params.mycall, ' ', sizeof(m_FortranData->params.mycall));
         memset(m_FortranData->params.hiscall, ' ', sizeof(m_FortranData->params.hiscall));
         memset(m_FortranData->params.mygrid, ' ', sizeof(m_FortranData->params.mygrid));
@@ -34,10 +35,10 @@ namespace XDft { namespace impl {
         memset(m_FortranData->params.datetime, ' ', sizeof(m_FortranData->params.datetime));
     }
 
-	Ft8DemodImpl::~Ft8DemodImpl()
+	FtDemodImpl::~FtDemodImpl()
 	{CancelCallbackThread();  }
 
-	void Ft8DemodImpl::CancelCallbackThread()
+	void FtDemodImpl::CancelCallbackThread()
 	{
 		lock_t l(m_mutex);
 		if (!m_audioSampleCbThread.joinable())
@@ -55,7 +56,7 @@ namespace XDft { namespace impl {
     // to aquire audio from the sound card. The XDft8Test application
     // demonstrates how to set up such a callback, but does not
     // otherwise use it.
-	void Ft8DemodImpl::AudioSampleCbThread()
+	void FtDemodImpl::AudioSampleCbThread()
 	{
 		for (;;)
 		{
@@ -84,11 +85,10 @@ namespace XDft { namespace impl {
     // in a UTC minute. A signal must begin at one of those
     // four, starting at 0 seconds, 15 seconds, 30s and 45s.
     // Reset() is called at that start. 
-	void Ft8DemodImpl::Reset()
+	void FtDemodImpl::Reset()
 	{
         lock_t l(m_mutex);
         m_FortranData->params.kin = 0; // supposedly the number of audio samples available
-		m_FortranData->params.nmode = 8;
 		m_FortranData->params.napwid = 50;
         m_FortranData->params.newdat = false;
         m_FortranData->params.ntrperiod = m_TRperiod;
@@ -102,7 +102,7 @@ namespace XDft { namespace impl {
         m_lastCalledBackIndex = 0;
 	}
 
-	void Ft8DemodImpl::SetDiskDat(bool v)
+	void FtDemodImpl::SetDiskDat(bool v)
 	{   // have no clue why ft9.exe cares, but this
         // bit says whether we're reading real time data
         // or a playback from disk
@@ -113,19 +113,19 @@ namespace XDft { namespace impl {
 
     // client must call here periodically. We check the UTC
     // clock and synchronize the ft8 decoder to the 15 second interval.
-    unsigned Ft8DemodImpl::Clock(unsigned tickToTriggerDecode, const DecodeClientFcn_t&f,
+    unsigned FtDemodImpl::Clock(unsigned tickToTriggerDecode, const DecodeClientFcn_t&f,
 		WsjtExe jt9, bool &invokedDecode, int &cycle)
     {
         invokedDecode = false;
         SYSTEMTIME st;
         GetSystemTime(&st);
-        unsigned ft8SecondNumber = st.wSecond % m_TRperiod;
-        m_Ft8CycleNumber = st.wSecond / m_TRperiod;
-        cycle = m_Ft8CycleNumber;
-        if (ft8SecondNumber >= tickToTriggerDecode)
+        unsigned ftSecondNumber = st.wSecond % m_TRperiod;
+        m_FtCycleNumber = st.wSecond / m_TRperiod;
+        cycle = m_FtCycleNumber;
+        if (ftSecondNumber >= tickToTriggerDecode)
             invokedDecode = Decode(f, jt9);
 
-        if (ft8SecondNumber == tickToTriggerDecode - 1)
+        if (ftSecondNumber == tickToTriggerDecode - 1)
         {   // the second before we trigger decode, reset the decoder...
             // ...should not be needed, but if it fails once, we'll never
             // invoke it again without this.
@@ -134,7 +134,7 @@ namespace XDft { namespace impl {
         }
 
         static const unsigned LISTEN_STARTUP_SECONDS = 1; // reset listen audio buffer this much early
-        if ((ft8SecondNumber == m_TRperiod - LISTEN_STARTUP_SECONDS) && !m_resetThisInterval)
+        if ((ftSecondNumber == m_TRperiod - LISTEN_STARTUP_SECONDS) && !m_resetThisInterval)
         {
             // Clock() is not called on any particular accurate time sequence.
             // Here we have noticed that we're in the final LISTEN_STARTUP_SECONDS of FT8's
@@ -177,10 +177,10 @@ namespace XDft { namespace impl {
         else
             m_resetThisInterval = false;
 
-        return ft8SecondNumber;
+        return ftSecondNumber;
     }
 
-    unsigned Ft8DemodImpl::GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb)
+    unsigned FtDemodImpl::GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb)
     {
         if (numPoints < NSMAX)
             throw std::runtime_error("GetSignalSpectrum requires at least 6827 points");
@@ -206,14 +206,15 @@ namespace XDft { namespace impl {
             // assembly and does not benefit from the process separation that
             // hosts the ft8 decoder. Bottom line: if you want to run multiple
             // radios concurrent, don't call here from within a single OS process.
-            symspec_(copy.get(), &k, &trmin, &nsps, &inGain, &smoothYellow,
+            bool bLowSidelobes = false;
+            symspec_(copy.get(), &k, &trmin, &nsps, &inGain, &bLowSidelobes, &smoothYellow,
                 &powerDb, pSpectrum, &df3, &ihsym, &npts8, &pxmax);
         }
         return static_cast<unsigned>(k);
     }
 
     // wav file playback or real time audio calls here.
-	bool Ft8DemodImpl::AddMonoSoundFrames12KHz(const short *p, unsigned nSamples)
+	bool FtDemodImpl::AddMonoSoundFrames12KHz(const short *p, unsigned nSamples)
 	{
 		static const unsigned SAMPLES_PER_SECOND = 12000;
 		static const unsigned capacitySamples = sizeof(dec_data.d2) / sizeof(dec_data.d2[0]);
@@ -307,13 +308,13 @@ namespace XDft { namespace impl {
     // invoke the FT8 decoder in the subprocess executable.
     // it responds with <DecoderFinished>
     // return early if the previous one hasn't finished.
-	bool Ft8DemodImpl::Decode(const DecodeClientFcn_t&f, WsjtExe jt9)
+	bool FtDemodImpl::Decode(const DecodeClientFcn_t&f, WsjtExe jt9)
 	{
 		if (!jt9.IsValid())
 			return false;
         if (jt9.DecodeInProgress())
             return false;
-        int cycleNumber = m_Ft8CycleNumber;
+        int cycleNumber = m_FtCycleNumber;
 		jt9.SetDecodeLineFcn(
             [this, f, jt9, cycleNumber](const std::string &s)
 		    {   // on stdout line from jt9, this lambda is called
@@ -340,7 +341,7 @@ namespace XDft { namespace impl {
         return true;
 	}
 
-    void Ft8DemodImpl::SetAudioSamplesCallback(const AudioCbFcn_t&f,
+    void FtDemodImpl::SetAudioSamplesCallback(const AudioCbFcn_t&f,
         unsigned sampleInterval, unsigned sampleCount,
         void *audioProcessor)
     {
@@ -360,7 +361,7 @@ namespace XDft { namespace impl {
             // the thread startup is deferred to the point the client
             // does something that requires it...
 			if (f || audioProcessor)
-				m_audioSampleCbThread = std::thread(std::bind(&Ft8DemodImpl::AudioSampleCbThread, this));
+				m_audioSampleCbThread = std::thread(std::bind(&FtDemodImpl::AudioSampleCbThread, this));
         }
 		toReleaseOutsideLock.reset();
         if (m_nativeAudioProcessor && m_nativeAudioProcessor->Initialize(m_FortranData.get()) <= 0)
@@ -370,62 +371,62 @@ namespace XDft { namespace impl {
     // we do NOT bother to lock our m_mutex below
     // under the assumption that the caller is going to use one (GUI-based) thread
     // to set all the decoding parameters.
-    int Ft8DemodImpl::get_nfa()
+    int FtDemodImpl::get_nfa()
     {        return m_FortranData->params.nfa;    }
 
-    void Ft8DemodImpl::set_nfa(int v)
+    void FtDemodImpl::set_nfa(int v)
     {        m_FortranData->params.nfa = v;    }
 
-    int Ft8DemodImpl::get_nfb()
+    int FtDemodImpl::get_nfb()
     {        return m_FortranData->params.nfb;    }
 
-    void Ft8DemodImpl::set_nfb(int v)
+    void FtDemodImpl::set_nfb(int v)
     {        m_FortranData->params.nfb = v;    }
 
-    int Ft8DemodImpl::get_n2pass()
+    int FtDemodImpl::get_n2pass()
     {        return m_FortranData->params.n2pass;    }
 
-    void Ft8DemodImpl::set_n2pass(int v)
+    void FtDemodImpl::set_n2pass(int v)
     {        m_FortranData->params.n2pass = v;    }
 
-    int Ft8DemodImpl::get_ndepth()
+    int FtDemodImpl::get_ndepth()
     {        return m_FortranData->params.ndepth;    }
 
-    void Ft8DemodImpl::set_ndepth(int v)
+    void FtDemodImpl::set_ndepth(int v)
     {        m_FortranData->params.ndepth = v;    }
 
-    int Ft8DemodImpl::get_nfqso()
+    int FtDemodImpl::get_nfqso()
     {        return m_FortranData->params.nfqso;    }
 
-    void Ft8DemodImpl::set_nfqso(int v)
+    void FtDemodImpl::set_nfqso(int v)
     {        m_FortranData->params.nfqso = v;    }
 
-    int Ft8DemodImpl::get_nftx()
+    int FtDemodImpl::get_nftx()
     {        return m_FortranData->params.nftx;    }
 
-    void Ft8DemodImpl::set_nftx(int v)
+    void FtDemodImpl::set_nftx(int v)
     {        m_FortranData->params.nftx = v;    }
 
-    bool Ft8DemodImpl::get_lft8apon()
+    bool FtDemodImpl::get_lft8apon()
     {        return m_FortranData->params.lft8apon;    }
 
-    void Ft8DemodImpl::set_lft8apon(bool v)
+    void FtDemodImpl::set_lft8apon(bool v)
     {        m_FortranData->params.lft8apon = v;    }
 
-    int Ft8DemodImpl::get_nexp_decode()
+    int FtDemodImpl::get_nexp_decode()
     {  return m_FortranData->params.nexp_decode; }
 
-    void Ft8DemodImpl::set_nexp_decode(int v)
+    void FtDemodImpl::set_nexp_decode(int v)
     {  m_FortranData->params.nexp_decode = v; }
 
-    void Ft8DemodImpl::set_mycall(const std::string &v)
+    void FtDemodImpl::set_mycall(const std::string &v)
     {
         memset(m_FortranData->params.mycall, ' ', sizeof(m_FortranData->params.mycall));
         memcpy(m_FortranData->params.mycall, v.c_str(), 
             std::min(v.size(), sizeof(m_FortranData->params.mycall)));
     }
 
-    std::string Ft8DemodImpl::get_mycall()
+    std::string FtDemodImpl::get_mycall()
     {
         std::string ret;
         ret.assign(m_FortranData->params.mycall, 
@@ -436,14 +437,14 @@ namespace XDft { namespace impl {
         return ret;
     }
 
-    void Ft8DemodImpl::set_hiscall(const std::string &v)
+    void FtDemodImpl::set_hiscall(const std::string &v)
     {
         memset(m_FortranData->params.hiscall, ' ', sizeof(m_FortranData->params.hiscall));
         memcpy(m_FortranData->params.hiscall, v.c_str(), 
             std::min(v.size(), sizeof(m_FortranData->params.hiscall)));
     }
 
-    std::string Ft8DemodImpl::get_hiscall()
+    std::string FtDemodImpl::get_hiscall()
     {
         std::string ret;
         ret.assign(m_FortranData->params.hiscall, 
@@ -453,5 +454,28 @@ namespace XDft { namespace impl {
             ret.resize(ret.size() - 1);
         return ret;
     }
+
+    DigiMode FtDemodImpl::get_digiMode()
+    {
+        return m_FortranData->params.nmode == 8 ? DIGI_FT8 : DIGI_FT4;
+    }
+
+    void FtDemodImpl::set_digiMode(DigiMode e)
+    {
+        switch (e)
+        {
+        case DIGI_FT4:
+            m_FortranData->params.nmode = 5;
+            m_TRperiod = 6;
+            m_FortranData->params.ntrperiod = 6;
+            break;
+        case DIGI_FT8:
+            m_FortranData->params.nmode = 8;
+            m_TRperiod = 15;
+            m_FortranData->params.ntrperiod = 15;
+            break;
+        }
+    }
+
 }}
 

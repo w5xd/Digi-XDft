@@ -310,7 +310,7 @@ namespace XDft { namespace impl {
         : m_goEvent(INVALID_HANDLE_VALUE)
         , m_quitEvent(INVALID_HANDLE_VALUE)
     {
-        static const wchar_t ExeName[] = L"XDft8Demod.exe";
+        static const wchar_t ExeName[] = L"XDftDemod.exe";
         m_exeName = ExeName;
         HMODULE hModule = 0;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,

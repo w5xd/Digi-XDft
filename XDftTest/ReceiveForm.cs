@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 /* Copyright (C) 2019 by Wayne E. Wright, W5XD
  * Round Rock, Texas  */
 
-namespace XDft8Test
+namespace XDftTest
 {
     /* MainForm
      * presents controls for invoking the FT8 modem for receive.
@@ -30,6 +30,7 @@ namespace XDft8Test
         private XDft.WsjtSharedMemory wsjtSharedMem;
         private XDft.WsjtExe wsjtExe;
         private XD.WaveDevicePlayer waveDevicePlayer;
+        private XDft.DigiMode digiMode;
 
         private string mycall;
         private TransmitForm xmitForm;
@@ -78,6 +79,8 @@ namespace XDft8Test
             demodulator.mycall = mycall;
             if (xmitForm != null)
                 xmitForm.mycall = mycall;
+
+            demodulator.digiMode = digiMode;
             // When the decoder finds an FT8 message, it calls us back...
             // ...on a foreign thread. Call BeginInvoke to get back on this one. See below.
             demodulator.DemodulatorResultCallback = new XDft.DemodResult(Decoded);
@@ -127,6 +130,8 @@ namespace XDft8Test
         }
 
         private bool StartedRecordFileThisCycle = false;
+        uint TRIGGER_DECODE = 12; // At second #12 and later, see if we see any messages
+        uint FINAL_SECOND = 14;
 
         // The XDft8 decoder, when operating in real time
         // invokes the FT8 demodulator on our clock. If we 
@@ -142,7 +147,6 @@ namespace XDft8Test
             if ((null != demodulator) && (null != waveDevicePlayer))
             {
                 // TRIGGER_DECODE tells the demodulator whether to actually demodulate
-                const uint TRIGGER_DECODE = 12; // At second #12 and later, see if we see any messages
                 bool invokedDecode = false; int cycleNumber = 0;
                 var interval = demodulator.Clock(TRIGGER_DECODE, wsjtExe, ref invokedDecode, ref cycleNumber);
                 // invokedDecode tells us whether it actually was able to invoke the wsjtx decoder.
@@ -150,7 +154,7 @@ namespace XDft8Test
                 // We have recently called into Clock which did invoke a decode, and that one isn't finished yet.
                 labelClock.Text = interval.ToString();
 
-                if ((interval == 14) && !StartedRecordFileThisCycle && !String.IsNullOrEmpty(RecordFileRootName) && RecordFileIteration > 0)
+                if ((interval == FINAL_SECOND) && !StartedRecordFileThisCycle && !String.IsNullOrEmpty(RecordFileRootName) && RecordFileIteration > 0)
                 {   // make a string of wav files if the user wants them
                     StartedRecordFileThisCycle = true;
                     waveDevicePlayer.StopRecording();
@@ -281,12 +285,16 @@ namespace XDft8Test
                 Close();
                 return;
             }
+            digiMode = sf.digiMode;
+            TRIGGER_DECODE = digiMode == XDft.DigiMode.DIGI_FT8 ? 13u : 3u;
+            FINAL_SECOND = digiMode == XDft.DigiMode.DIGI_FT8 ? 14u: 5u;
             InitDemodulator(sf);
             var wavesIn = XD.WaveDeviceEnumerator.waveInDevices();
             foreach (var s in wavesIn)
                 comboBoxWaveIn.Items.Add(s);
             comboBoxWaveIn.SelectedIndex = 0;
             xmitForm = new TransmitForm();
+            xmitForm.digiMode = digiMode;
             xmitForm.mycall = mycall;
             xmitForm.Show();
         }

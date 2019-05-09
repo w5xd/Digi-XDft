@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace XDft8Test
+namespace XDftTest
 {
     public partial class SetupForm : Form
     {
@@ -50,6 +50,7 @@ namespace XDft8Test
         public String sharedMemoryKey;
         public String appDataName;
         public String myCall;
+        public XDft.DigiMode digiMode = XDft.DigiMode.DIGI_FT8;
 
         private void SetupForm_Load(object sender, EventArgs e)
         {
@@ -108,7 +109,9 @@ namespace XDft8Test
                 DialogResult = DialogResult.None;
                 MessageBox.Show("Name to user for folder in AppData directory must be setup.");
                 return;
-             }
+            }
+            if (radioButtonFt4.Checked)
+                digiMode = XDft.DigiMode.DIGI_FT4;
         }
     }
 }

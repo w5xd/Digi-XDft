@@ -1,4 +1,4 @@
-﻿namespace XDft8Test
+﻿namespace XDftTest
 {
     partial class SetupForm
     {
@@ -42,7 +42,11 @@
             this.label3 = new System.Windows.Forms.Label();
             this.textBoxMyCall = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.radioButtonFt4 = new System.Windows.Forms.RadioButton();
+            this.radioButtonFt8 = new System.Windows.Forms.RadioButton();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // buttonCancel
@@ -51,7 +55,7 @@
             this.buttonCancel.Location = new System.Drawing.Point(504, 575);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(75, 23);
-            this.buttonCancel.TabIndex = 4;
+            this.buttonCancel.TabIndex = 5;
             this.buttonCancel.Text = "&Cancel";
             this.buttonCancel.UseVisualStyleBackColor = true;
             // 
@@ -61,7 +65,7 @@
             this.buttonOK.Location = new System.Drawing.Point(603, 575);
             this.buttonOK.Name = "buttonOK";
             this.buttonOK.Size = new System.Drawing.Size(75, 23);
-            this.buttonOK.TabIndex = 5;
+            this.buttonOK.TabIndex = 6;
             this.buttonOK.Text = "&OK";
             this.buttonOK.UseVisualStyleBackColor = true;
             this.buttonOK.Click += new System.EventHandler(this.buttonOK_Click);
@@ -152,7 +156,7 @@
             this.textBoxIntro.Name = "textBoxIntro";
             this.textBoxIntro.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBoxIntro.Size = new System.Drawing.Size(666, 361);
-            this.textBoxIntro.TabIndex = 6;
+            this.textBoxIntro.TabIndex = 7;
             // 
             // label3
             // 
@@ -178,6 +182,39 @@
             this.label6.TabIndex = 1;
             this.label6.Text = "In certain situations the FT8 decoder uses My call. It may be left blank.\r\n";
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.radioButtonFt4);
+            this.groupBox2.Controls.Add(this.radioButtonFt8);
+            this.groupBox2.Location = new System.Drawing.Point(507, 487);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(114, 62);
+            this.groupBox2.TabIndex = 4;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Mode";
+            // 
+            // radioButtonFt4
+            // 
+            this.radioButtonFt4.AutoSize = true;
+            this.radioButtonFt4.Location = new System.Drawing.Point(64, 29);
+            this.radioButtonFt4.Name = "radioButtonFt4";
+            this.radioButtonFt4.Size = new System.Drawing.Size(44, 17);
+            this.radioButtonFt4.TabIndex = 1;
+            this.radioButtonFt4.Text = "FT4";
+            this.radioButtonFt4.UseVisualStyleBackColor = true;
+            // 
+            // radioButtonFt8
+            // 
+            this.radioButtonFt8.AutoSize = true;
+            this.radioButtonFt8.Checked = true;
+            this.radioButtonFt8.Location = new System.Drawing.Point(8, 29);
+            this.radioButtonFt8.Name = "radioButtonFt8";
+            this.radioButtonFt8.Size = new System.Drawing.Size(44, 17);
+            this.radioButtonFt8.TabIndex = 0;
+            this.radioButtonFt8.TabStop = true;
+            this.radioButtonFt8.Text = "FT8";
+            this.radioButtonFt8.UseVisualStyleBackColor = true;
+            // 
             // SetupForm
             // 
             this.AcceptButton = this.buttonOK;
@@ -185,6 +222,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonCancel;
             this.ClientSize = new System.Drawing.Size(690, 610);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.textBoxMyCall);
             this.Controls.Add(this.label3);
@@ -196,10 +234,12 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SetupForm";
-            this.Text = "XDft8 Setup Parameters";
+            this.Text = "XDft Setup Parameters";
             this.Load += new System.EventHandler(this.SetupForm_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -221,5 +261,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox textBoxMyCall;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.RadioButton radioButtonFt4;
+        private System.Windows.Forms.RadioButton radioButtonFt8;
     }
 }

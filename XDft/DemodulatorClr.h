@@ -2,7 +2,7 @@
 namespace XDft {
     namespace impl {
         class WsjtExe;
-        class Ft8Demod;
+        class FtDemod;
     }
     ref class WsjtExeBase;
     
@@ -20,6 +20,8 @@ namespace XDft {
     // because of its use of a FORTRAN common. XDft8 presents
     // a for an alternative implementation. The end result is an AudioCallback
     public delegate void AudioCallback(array<float>^);
+
+    public enum class DigiMode { DIGI_FT8, DIGI_FT4 }; // keep same as FtDemod.h
 
     // class Demodulator. accepts audio input from either a device or a file and 
     // sends it to the wsjtx ft8 decoder.
@@ -76,10 +78,10 @@ namespace XDft {
         property int nexp_decode { int get(); void set(int); }
         property System::String^ mycall {System::String^get(); void set(System::String^); }
         property System::String^ hiscall {System::String^get(); void set(System::String^); }
-
+        property DigiMode digiMode { DigiMode get(); void set(DigiMode); }
 
 	private:
-        impl::Ft8Demod *m_Ft8Demod;
+        impl::FtDemod *m_Ft8Demod;
         DemodResult^ m_demodResult;
         AudioCallback^ m_audioSamplesCallback;
 	};

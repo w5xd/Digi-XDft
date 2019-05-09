@@ -62,8 +62,8 @@
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
-    <Import Project="..\XDwsjtFT8Runtime.props" />
-    <Import Project="..\XDwsjtFT8.props" />
+    <Import Project="..\XDwsjtFtRuntime.props" />
+    <Import Project="..\XDwsjtFt.props" />
     <Import Project="..\WsjtxBoost.props" />
     <Import Project="..\XD.props" />
   </ImportGroup>
@@ -105,7 +105,7 @@
       <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XDwsjtFT8.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XDwsjtFT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -117,7 +117,7 @@
       <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XDwsjtFT8.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XDwsjtFT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -128,7 +128,7 @@
       <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XDwsjtFT8.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XDwsjtFT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,13 +139,13 @@
       <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XDwsjtFT8.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XDwsjtFT.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DemodulatorClr.h" />
-    <ClInclude Include="Ft8DemodImpl.h" />
-    <ClInclude Include="Ft8Demod.h" />
+    <ClInclude Include="FtDemodImpl.h" />
+    <ClInclude Include="FtDemod.h" />
     <ClInclude Include="GeneratorClr.h" />
     <ClInclude Include="GeneratorImpl.h" />
     <ClInclude Include="WsjtExe.h" />
@@ -159,7 +159,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="stdafxClr.h" />
     <ClInclude Include="StringConvert.h" />
-    <ClInclude Include="XDft8.h" />
+    <ClInclude Include="XDft.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -182,13 +182,13 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)$(TargetName)Clr.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)$(TargetName)Clr.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="Ft8DemodImpl.cpp">
+    <ClCompile Include="FtDemodImpl.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
-    <ClCompile Include="Ft8Demod.cpp">
+    <ClCompile Include="FtDemod.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -282,7 +282,7 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)$(TargetName)Clr.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)$(TargetName)Clr.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="XDft8.cpp">
+    <ClCompile Include="XDft.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafxClr.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafxClr.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClr.h</PrecompiledHeaderFile>

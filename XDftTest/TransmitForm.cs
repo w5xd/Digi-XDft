@@ -11,7 +11,7 @@ using System.Windows.Forms;
 /* Copyright (C) 2019 by Wayne E. Wright, W5XD
  * Round Rock, Texas  */
 
-namespace XDft8Test
+namespace XDftTest
 {
     /* Note to programmer reading this for the first time.
      * Transmitting FT8 is far simpler than receiving it.
@@ -36,8 +36,19 @@ namespace XDft8Test
             foreach (var s in wavesOut)
                 comboBoxWaveOut.Items.Add(s);
             comboBoxWaveOut.SelectedIndex = 0;
+
+            switch (digiMode)
+            {
+                case XDft.DigiMode.DIGI_FT8:
+                     generatorContext = XDft.GeneratorContext.getFt8Context();
+                    break;
+                case XDft.DigiMode.DIGI_FT4:
+                    generatorContext = XDft.GeneratorContext.getFt4Context();
+                    break;
+            }
         }
 
+        public XDft.DigiMode digiMode = XDft.DigiMode.DIGI_FT8;
         private int[] itone = null;
         public string mycall;
 
@@ -50,8 +61,8 @@ namespace XDft8Test
             // this code's only purpose is to make it easy to interactively test
             //  ReceivedMessage.CreateFromPacked
             XDft.Generator.setpack77mycall(mycall); // probably not needed, but sets Fortran static
-            string mybasecall = null;
-            XDft.Generator.checkCall(mycall, ref mybasecall);
+            int n28=0;
+            bool isHashed = XDft.Generator.pack28(mycall, ref n28);
             int i3 = 0; int n3 = 0;
             bool[] c77 = null;
             XDft.Generator.pack77(msgText, ref i3, ref n3, ref c77);
@@ -61,10 +72,20 @@ namespace XDft8Test
             XDpack77.Pack77Message.Message m =
                 XDpack77.Pack77Message.ReceivedMessage.CreateFromPacked(i3, n3, msgText);
 #endif
-            // here is 99% of the magic--turn the text into a wsjtx itone array
-            XDft.Generator.genft8(
-                msgText, 
-                ref sent, ref itone, ref ft8bits);
+            // turn the text into a wsjtx itone array
+            switch (digiMode)
+            {
+                case XDft.DigiMode.DIGI_FT8:
+                    XDft.Generator.genft8(
+                        msgText,
+                        ref sent, ref itone, ref ft8bits);
+                    break;
+                case XDft.DigiMode.DIGI_FT4:
+                    XDft.Generator.genft4(
+                        msgText,
+                        ref sent, ref itone, ref ft8bits);
+                    break;
+            }
             labelXmit.Text = sent;
         }
 
@@ -77,6 +98,7 @@ namespace XDft8Test
                 deviceTx.Dispose();
             deviceTx = null;
         }
+        private XDft.GeneratorContext generatorContext;
 
         void SendSoundFromTextToDevice(XD.Transmit_Cycle ft)
         {
@@ -94,7 +116,7 @@ namespace XDft8Test
             }
             deviceTx.TransmitCycle = ft;
 #if true
-            XDft.Generator.Play(itone, (int)numericUpDownFrequency.Value,
+            XDft.Generator.Play(generatorContext, itone, (int)numericUpDownFrequency.Value,
                  deviceTx.GetRealTimeAudioSink());
 #else   // play multiple
             List<XDft.Tone> tones = new List<XDft.Tone>();
@@ -182,14 +204,14 @@ namespace XDft8Test
             fd.Filter = "Wave Files (*.wav)|*.wav";
             if (fd.ShowDialog() == DialogResult.OK)
             {
-#if !DEBUG
-                XDft.Generator.Play(itone, (int)numericUpDownFrequency.Value,
+#if true
+                XDft.Generator.Play(generatorContext, itone, (int)numericUpDownFrequency.Value,
                     XD.FileDeviceTx.Open(fd.FileName));
 #else
                 List<XDft.Tone> tones = new List<XDft.Tone>();
                 tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
                 tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value + 100));
-                XDft.Generator.Play(tones.ToArray(), XD.FileDeviceTx.Open(fd.FileName));
+                XDft.Generator.Play(generatorContext, tones.ToArray(), XD.FileDeviceTx.Open(fd.FileName));
 #endif
             }
         }

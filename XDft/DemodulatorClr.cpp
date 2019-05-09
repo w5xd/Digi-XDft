@@ -2,13 +2,12 @@
 #include "DemodulatorClr.h"
 #include "WsjtExe.h"
 #include "WsjtExeClr.h"
-#include "Ft8Demod.h"
-#include "XDxmitFT8.h"
+#include "FtDemod.h"
 
 namespace XDft {
 
 	Demodulator::Demodulator()
-		: m_Ft8Demod(new impl::Ft8Demod())
+		: m_Ft8Demod(new impl::FtDemod())
 	{
         m_Ft8Demod->Create();
     }
@@ -55,7 +54,7 @@ namespace XDft {
         }
     }
 
-	void PlaybackFinalDecode(long long cbId, impl::WsjtExe wsjt, impl::Ft8Demod demod)
+	void PlaybackFinalDecode(long long cbId, impl::WsjtExe wsjt, impl::FtDemod demod)
 	{
         impl::DecodeClientFcn_t f =
             std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2, cbId );
@@ -67,7 +66,7 @@ namespace XDft {
         try {
             if (!m_Ft8Demod->IsValid())
                 return System::IntPtr(0);
-            // send the time data to Ft8Demod
+            // send the time data to FtDemod
             if (nullptr == wsjt)
 				return System::IntPtr(0);
 			wsjt->GetImpl().SetDecodeLineFcn();
@@ -288,6 +287,19 @@ namespace XDft {
                 arg = msclr::interop::marshal_as<std::string>(v);
             m_Ft8Demod->set_hiscall(arg);
         }
+    }
+
+    DigiMode Demodulator::digiMode::get()
+    {
+        if (m_Ft8Demod->IsValid())
+            return static_cast<DigiMode>(static_cast<int>(m_Ft8Demod->get_digiMode()));
+        return DigiMode::DIGI_FT8;
+    }
+
+    void Demodulator::digiMode::set(DigiMode e)
+    {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_digiMode(static_cast<impl::DigiMode>(static_cast<int>(e)));
     }
 
 }

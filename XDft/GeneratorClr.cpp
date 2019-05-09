@@ -1,7 +1,7 @@
 #include "stdafxClr.h"
 #include <AudioSink.h>
 #include <commons.h>
-#include <XDxmitFT8.h>
+#include <XDencode.h>
 #include "GeneratorClr.h"
 #include "GeneratorImpl.h"
 
@@ -9,6 +9,7 @@
 namespace XDft {
 
 	const unsigned NUM_FT8_SYMBOLS = 79;
+    const unsigned NUM_FT4_SYMBOLS = 103;
 	const unsigned NUM_FT8_BITS = 77;
     const int NUM_MSG_CHARS = 37;
     const int ThirtySeven = 37;
@@ -52,6 +53,36 @@ namespace XDft {
 			ft8bits[i] = ft8msgbits[i] != 0;
 	}
 
+	void Generator::genft4(System::String ^msg, System::String ^%msgSent, 
+		array<int> ^%itoneOut, array<bool> ^%ft4bits)
+	{
+        int ichk = 0;
+		std::vector<char> msgsent(NUM_MSG_CHARS, ' ');
+		std::vector<char> ft4msgbits(NUM_FT8_BITS, ' ');
+		std::unique_ptr<int[]>  itone (new int [NUM_ISCAT_SYMBOLS]);
+
+		// c to fortran
+        std::vector<char> message(NUM_MSG_CHARS, ' ');
+        memcpy(&message[0], msclr::interop::marshal_as<std::string>(msg).c_str(), std::min(msg->Length, NUM_MSG_CHARS));
+
+		genft4_(&message[0], &ichk, &msgsent[0], &ft4msgbits[0], &itone[0], message.size(), msgsent.size());
+        std::string msgSentStr;
+        msgSentStr.assign(msgsent.begin(), msgsent.end());
+		msgSent = msclr::interop::marshal_as<System::String^>(msgSentStr);
+        // wsjtx adds the extra begin/end symbols at wave generation time.
+        // In our wave generator, ft8 and ft4 are identical. so its consistent to add extras here.
+        // The extra symbols accommodate ramp up/down times.
+		itoneOut = gcnew array<int>(NUM_FT4_SYMBOLS+2);
+		for (unsigned i = 0; i < NUM_FT4_SYMBOLS; i++)
+			itoneOut[i+1] = itone[i];
+        // copy first and last symbols
+        itoneOut[0] = itoneOut[1];
+        itoneOut[NUM_FT4_SYMBOLS+1] = itone[NUM_FT4_SYMBOLS-1];
+		ft4bits = gcnew array<bool>(NUM_FT8_BITS);
+		for (unsigned i = 0; i < NUM_FT8_BITS; i++)
+			ft4bits[i] = ft4msgbits[i] != 0;
+	}
+    
     void Generator::setpack77mycall(System::String ^mycall)
     {   // copy value into wsjt fortran statics
         std::string mycallc = msclr::interop::marshal_as<std::string>(mycall);
@@ -136,7 +167,20 @@ namespace XDft {
         return ok != 0;
     }
 
-    void Generator::Play(array<int>^itone, int baseFrequency, System::IntPtr outputSink)
+    bool Generator::pack28(System::String ^call, int %n28)
+    {
+        std::string cppcall = msclr::interop::marshal_as<std::string>(call);
+        std::vector<char> cCallFortran(13, ' ');
+        memcpy(&cCallFortran[0], cppcall.c_str(), std::min(cCallFortran.size(), cppcall.length()));
+        int n=0;
+        ::__packjt77_MOD_pack28(&cCallFortran[0], &n, cCallFortran.size());
+        n28 = n;
+        static const int MAX22 = 4194304;
+        static const int NTOKENS = 2063592;
+        return n < NTOKENS + MAX22; // see pack28 source code NTOKENS + MAX22
+    }
+
+    void Generator::Play(GeneratorContext ^context, array<int>^itone, int baseFrequency, System::IntPtr outputSink)
     {
         std::shared_ptr<XD::AudioSink> pSink(
             reinterpret_cast<XD::AudioSink*>(outputSink.ToPointer()), [](XD::AudioSink *p)
@@ -150,7 +194,7 @@ namespace XDft {
                 pin_ptr<int> pPin = &itone[0];
                 memcpy(&itoneNative[0], pPin, sizeof(itoneNative[0]) * itoneNative.size());
             }
-            impl::GeneratorImpl::Play(itoneNative, baseFrequency, pSink);
+            impl::GeneratorImpl::Play(context->getImpl(),itoneNative, baseFrequency, pSink);
         }
         catch (const std::exception &e)
         {   // convert c++ to clr exception
@@ -158,7 +202,7 @@ namespace XDft {
         }
     }
 
-    void Generator::Play(array<Tone^> ^itones, System::IntPtr outputSink)
+    void Generator::Play(GeneratorContext ^context, array<Tone^> ^itones, System::IntPtr outputSink)
     {
         std::shared_ptr<XD::AudioSink> pSink(
             reinterpret_cast<XD::AudioSink*>(outputSink.ToPointer()), [](XD::AudioSink *p)
@@ -177,7 +221,7 @@ namespace XDft {
                 pin_ptr<int> pPin = &itones[i]->itone[0];
                 memcpy(&tones[0], pPin, sizeof(tones[0]) * tones.size());
             }
-            impl::GeneratorImpl::Play(toPlay, pSink);
+            impl::GeneratorImpl::Play(context->getImpl(),toPlay, pSink);
         }
         catch (const std::exception &e)
         {   // convert c++ to clr exception
@@ -185,4 +229,15 @@ namespace XDft {
         }
     }
 
+    GeneratorContext ^GeneratorContext::getFt4Context()
+    { return gcnew GeneratorContext(impl::GeneratorContext::getFt4Context());   }
+
+    GeneratorContext ^GeneratorContext::getFt8Context()
+    {     return gcnew GeneratorContext(impl::GeneratorContext::getFt8Context());   }
+
+    GeneratorContext::~GeneratorContext()
+    {   delete m_impl;   }
+
+    GeneratorContext::GeneratorContext(impl::GeneratorContext *p)
+    {        m_impl = p; }
 }

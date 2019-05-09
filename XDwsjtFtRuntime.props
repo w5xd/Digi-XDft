@@ -4,12 +4,12 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Command>copy $(XDwsjtFT8SdkDir)bin$(Platform)\*.dll $(OutDir)</Command>
+      <Command>copy $(XDwsjtFtSdkDir)bin$(Platform)\*.dll $(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Message>copy XDwsjtFT8 dll's to output</Message>
+      <Message>copy XDwsjtFT dll's to output</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
 </Project>

@@ -24,9 +24,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="XDft8.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -34,12 +31,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StringConvert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Ft8Demod.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Ft8DemodImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SharedMemoryImpl.h">
@@ -75,11 +66,17 @@
     <ClInclude Include="GeneratorImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FtDemod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FtDemodImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XDft.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="XDft8.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AssemblyInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,12 +84,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Ft8Demod.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Ft8DemodImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SharedMemoryImpl.cpp">
@@ -120,6 +111,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratorImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FtDemod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FtDemodImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XDft.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

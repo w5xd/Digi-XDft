@@ -26,17 +26,17 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="XDft8Demod.cpp">
+    <ClCompile Include="XDftDemod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="XDft8Demod.rc">
+    <ResourceCompile Include="XDftDemod.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="XDft8Demod.rc2">
+    <None Include="XDftDemod.rc2">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

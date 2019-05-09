@@ -2,20 +2,20 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <XDwsjtFT8SdkDir>D:\dev\XDwsjtFT8Sdk-2.0.1.2\</XDwsjtFT8SdkDir>
+    <XDwsjtFtSdkDir>D:\dev\XDwsjtFtSdk-2.1.0.1\</XDwsjtFtSdkDir>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(XDwsjtFT8SdkDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(XDwsjtFtSdkDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(XDwsjtFT8SdkDir)lib$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(XDwsjtFtSdkDir)lib$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <BuildMacro Include="XDwsjtFT8SdkDir">
-      <Value>$(XDwsjtFT8SdkDir)</Value>
+    <BuildMacro Include="XDwsjtFtSdkDir">
+      <Value>$(XDwsjtFtSdkDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

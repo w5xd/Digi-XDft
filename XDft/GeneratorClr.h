@@ -10,6 +10,23 @@ namespace XDft {
         array<int>^itone;
         int frequency;
     };
+
+    namespace impl {
+        class GeneratorContext;
+    }
+
+    public ref class GeneratorContext
+    {
+    public:
+        static GeneratorContext ^getFt8Context();
+        static GeneratorContext ^getFt4Context();
+        ~GeneratorContext();
+        impl::GeneratorContext *getImpl() { return m_impl; }
+    protected:
+        GeneratorContext(impl::GeneratorContext*);
+        impl::GeneratorContext *m_impl;
+    };
+
     public ref class Generator
 	{
 	public:
@@ -17,6 +34,10 @@ namespace XDft {
 			System::String ^%msgSent,	// after encoding to 77 bits and decoding
 			array<int> ^%itone,		// what to transmit
 			array<bool> ^%ft8bits);	// info. 
+		static void genft4(System::String ^msg, // to send
+			System::String ^%msgSent,	// after encoding to 77 bits and decoding
+			array<int> ^%itone,		// what to transmit
+			array<bool> ^%ft4bits);	// info. 
 
         // ensure unpack77 has a hashed copy of our call
         static void setpack77mycall(System::String ^call);
@@ -25,8 +46,9 @@ namespace XDft {
         static void pack77(System::String ^msg, int %i3, int %n3, array<bool>^%c77);
         static bool unpack77(array<bool>^c77, int forRx, System::String^%msg);
         static bool checkCall(System::String ^call, System::String ^%basecall);
-        static void Play(array<int>^itone, int baseFrequency, System::IntPtr outputSink);
-        static void Play(array<Tone^> ^itones, System::IntPtr outputSink);
+        static bool pack28(System::String ^call, int %n28);
+        static void Play(GeneratorContext ^context, array<int>^itone, int baseFrequency, System::IntPtr outputSink);
+        static void Play(GeneratorContext ^context, array<Tone^> ^itones, System::IntPtr outputSink);
 
     protected:
 	};

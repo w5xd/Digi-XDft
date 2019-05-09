@@ -1,8 +1,8 @@
 #include "pch.h"
 #include <commons.h>
-#include <XDrcvFT8.h>
+#include <XDdecode.h>
 
-/* XDft8Demod. What is this?
+/* XDftDemod. What is this?
 ** The underlying FORTRAN code in wsjtx for
 ** modulating and demodulating is not re-entrant.
 ** That means that any given process in the OS can only
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
             }
         }
         // here is where the magic happens..decodes and it writes to stdout
-        xdft8decode_(&pFortanCommon->params, pFortanCommon->d2, temp_dir.c_str());
+        xddecode_(&pFortanCommon->params, pFortanCommon->d2, temp_dir.c_str());
         if (events.empty())
             break; // when testing, we go through the loop only once
     }

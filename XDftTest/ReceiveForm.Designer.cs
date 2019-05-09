@@ -1,4 +1,4 @@
-﻿namespace XDft8Test
+﻿namespace XDftTest
 {
     partial class ReceiveForm
     {

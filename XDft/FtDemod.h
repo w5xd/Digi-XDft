@@ -2,15 +2,16 @@
 #include "WsjtExe.h"
 namespace XDft {
     namespace impl {
-    class Ft8DemodImpl;
+    class FtDemodImpl;
     typedef std::function<void(const float *, unsigned)> AudioCbFcn_t;
 	typedef std::function<void()> AudioCompleteFcn_t;
     typedef std::function<void(const std::string &, int)> DecodeClientFcn_t;
-    class Ft8Demod
+    enum DigiMode { DIGI_FT8, DIGI_FT4 }; // Keep same as in DemodulatorClr.h
+    class FtDemod
     {
     public:
-        Ft8Demod();
-        ~Ft8Demod();
+        FtDemod();
+        ~FtDemod();
         void Create();
         void SetDiskDat(bool);
         bool AddMonoSoundFrames12KHz(const short *p, unsigned count);
@@ -44,10 +45,12 @@ namespace XDft {
         std::string get_mycall();
         void set_hiscall(const std::string &);
         std::string get_hiscall();
+        DigiMode get_digiMode();
+        void set_digiMode(DigiMode);
 
         bool IsValid()const;
     private:
-        std::shared_ptr<Ft8DemodImpl> m_impl;
+        std::shared_ptr<FtDemodImpl> m_impl;
     };
 }
 }

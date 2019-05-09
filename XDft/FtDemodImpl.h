@@ -1,15 +1,15 @@
 #pragma once
 #include "WsjtExe.h"
-#include "Ft8Demod.h"
+#include "FtDemod.h"
 #include <NativeAudioProcessor.h>
 struct dec_data;
 namespace XDft {
     namespace impl {
-        class Ft8DemodImpl
+        class FtDemodImpl
         {
         public:
-            Ft8DemodImpl();
-            ~Ft8DemodImpl();
+            FtDemodImpl();
+            ~FtDemodImpl();
             void SetDiskDat(bool);
             bool AddMonoSoundFrames12KHz(const short *p, unsigned count);
             bool Decode(const DecodeClientFcn_t&, WsjtExe);
@@ -39,6 +39,8 @@ namespace XDft {
             std::string get_mycall();
             void set_hiscall(const std::string &);
             std::string get_hiscall();
+            DigiMode get_digiMode();
+            void set_digiMode(DigiMode);
 
             void Reset();
         private:
@@ -51,7 +53,7 @@ namespace XDft {
             unsigned m_lastCalledBackIndex;
             int	 m_decSamplesWritten;
             int  m_TRperiod;
-            int  m_Ft8CycleNumber;
+            int  m_FtCycleNumber;
             bool m_resetThisInterval;
             bool m_clipSoundToTimepoint;;
             ULARGE_INTEGER m_timepointToTruncate;

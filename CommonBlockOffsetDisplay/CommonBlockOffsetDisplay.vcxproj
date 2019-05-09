@@ -58,7 +58,7 @@
   <ImportGroup Label="Shared">
   </ImportGroup>
     <ImportGroup Label="PropertySheets" >
-        <Import Project="..\XDwsjtFT8.props" />
+        <Import Project="..\XDwsjtFt.props" />
     </ImportGroup>
     <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
