@@ -20,46 +20,37 @@ namespace XDft {
             // 4x of something very small is still small enough for me.
             const unsigned AUDIO_SAMPLES_PER_SEC_OUT = 48000;
             const float GENERATOR_MAX_AMPLITUDE = 0.95f;
-            const unsigned MSEC_SILENT_BEGIN_AND_END = 10;
+            const unsigned MSEC_SILENT_BEGIN = 10;
+            const unsigned MSEC_SILENT_END = 1;
             const unsigned MSEC_RAMPUPDOWN = 20;
-            const unsigned SILENT_SAMPLES = MSEC_SILENT_BEGIN_AND_END * AUDIO_SAMPLES_PER_SEC_OUT / 1000;
-           /* There is code below that assumes that the number
-            ** of samples in AUDIO_SAMPLES_PER_SEC_OUT is an
-            ** integral number of all the MSEC_xyz's in this file.
-            ** In particular, that means that the values of 10msec above
-            ** can be used for 44100Hz output, but NOT for 11025.
-            ** ...however...the inaccuracies due to integer
-            ** truncations for those features (silence at ends
-            ** and ramp up/down rates) won't do much harm.
-            ** On the other hand, do NOT attempt to generate FT8
-            ** if 160msec is not an integral number of cycles
-            ** of your AUDIO_SAMPLES_PER_SEC_OUT
-            */
+            const unsigned BEGINNING_SILENT_SAMPLES = MSEC_SILENT_BEGIN * AUDIO_SAMPLES_PER_SEC_OUT / 1000;
+            const unsigned TRAILING_SILENT_SAMPLES = MSEC_SILENT_END * AUDIO_SAMPLES_PER_SEC_OUT / 1000;
         }
 
         class GeneratorContextImpl : public GeneratorContext
         {
         public:
             unsigned SamplesPerSymbol() { return m_samplesPerSymbol; }
-            void initialize();
+            unsigned BeginningSilentSamples() { return m_beginningSilentSamples; }
+            void initialize(unsigned short);
             void computeAngles(const std::vector<int>&itones, int baseFrequency, std::vector<double> &deltaAngles);
         protected:
             enum { PULSE_SYMBOL_WIDTH = 3 };
             GeneratorContextImpl();
             unsigned m_samplesPerSymbol;
             float m_pulseScale;
+            unsigned m_beginningSilentSamples;
             std::vector<float> pulse;
         };
 
         class GeneratorContextFt8Impl : public GeneratorContextImpl
         {
-        public:
-            GeneratorContextFt8Impl();
+        public:   GeneratorContextFt8Impl();
         };
+
         class GeneratorContextFt4Impl : public GeneratorContextImpl
         {
-        public:
-            GeneratorContextFt4Impl();
+        public: GeneratorContextFt4Impl();
         };
 
        // ramp up and down without clicks using a raised cosine function.
@@ -88,7 +79,8 @@ namespace XDft {
             const unsigned MSEC_PER_SYMBOL = 160;
             const unsigned SAMPLES_PER_SYMBOL = (MSEC_PER_SYMBOL * AUDIO_SAMPLES_PER_SEC_OUT) / 1000;
         }
-       namespace FT4 {
+
+        namespace FT4 {
             // definition of the on-the-air protocol
             const unsigned SAMPLES_PER_SYMBOL = 2048;
             // MSEC_PER_SYMBOL = 2048/48000 = ~42.6666
@@ -102,9 +94,8 @@ namespace XDft {
         {
             GeneratorContextImpl *ctx = reinterpret_cast<GeneratorContextImpl*>(ctxp);
             unsigned numberOfSamples = static_cast<unsigned>(itones.size()) * ctx->SamplesPerSymbol();
-
-            unsigned i = SILENT_SAMPLES;
-            std::vector<short> audioSamples(std::max(TARGET_BUFFER_SAMPLE_COUNT, SILENT_SAMPLES));
+            unsigned i = ctx->BeginningSilentSamples();
+            std::vector<short> audioSamples(std::max(TARGET_BUFFER_SAMPLE_COUNT, i));
             unsigned rampUpIdx = 0;
             unsigned rampDownIdx = numberOfSamples;
             std::vector<double> deltaAngle;
@@ -134,7 +125,7 @@ namespace XDft {
                         angle -= TWO_PI;
                 }
             }
-            audioSamples.insert(audioSamples.end(), SILENT_SAMPLES, 0);
+            audioSamples.insert(audioSamples.end(), TRAILING_SILENT_SAMPLES, 0);
             outputSink->AddMonoSoundFrames(&audioSamples[0], static_cast<unsigned>(audioSamples.size()));
             outputSink->AudioComplete();
          }
@@ -146,9 +137,16 @@ namespace XDft {
             struct PerSignal {
                 PerSignal() : numberOfSamples(0),  angle(0), rampUpIdx(0), rampDownIdx(0), normalizedCoefficient(1.f)
                     ,itoneIdx(0), j(0) , angleIdx(0)
-                    // randomize start times up to 1/3 second late
-                    ,silentSamples(rand() * AUDIO_SAMPLES_PER_SEC_OUT / (3 * RAND_MAX)) 
+                    ,silentSamples(0) 
                 {}
+                void init(unsigned samplesPerSymbol, unsigned offset, unsigned short delayMsec)
+                {   // randomize start times out to a symbol length late
+                    silentSamples = offset;   
+                    if (delayMsec == 0)
+                        silentSamples += (rand() * samplesPerSymbol) / RAND_MAX;
+                    else
+                        silentSamples += (delayMsec * AUDIO_SAMPLES_PER_SEC_OUT) / 1000;
+                }
                 unsigned numberOfSamples;
                 unsigned silentSamples;
                 double angle;
@@ -161,23 +159,23 @@ namespace XDft {
                 unsigned j;
             };
 
+            GeneratorContextImpl *ctx = reinterpret_cast<GeneratorContextImpl*>(ctxp);
             double coefTotal = 0;
             unsigned minSilentSamples(0x7ffffff); // large unsigned
             unsigned maxNumberOfSamples(0);
             unsigned maxToneLength(0);
             std::vector<PerSignal> signals(tones.size());
-            GeneratorContextImpl *ctx = reinterpret_cast<GeneratorContextImpl*>(ctxp);
             for (unsigned i = 0; i < tones.size(); i++)
             {
+                signals[i].init(ctx->SamplesPerSymbol(), ctx->BeginningSilentSamples(), tones[i].delayMsec);
                 signals[i].numberOfSamples = static_cast<unsigned>(
                     tones[i].itone.size()) * ctx->SamplesPerSymbol();
-                signals[i].silentSamples += SILENT_SAMPLES;
                 if (signals[i].silentSamples < minSilentSamples)
                     minSilentSamples = signals[i].silentSamples;
                 signals[i].rampDownIdx = signals[i].numberOfSamples;
                 signals[i].normalizedCoefficient = tones[i].coefficient;
                 if (tones[i].itone.size() > maxToneLength)
-                    maxToneLength = tones[i].itone.size();
+                    maxToneLength = static_cast<unsigned>(tones[i].itone.size());
                 coefTotal += fabs(tones[i].coefficient);
                 if (signals[i].numberOfSamples > maxNumberOfSamples)
                     maxNumberOfSamples = signals[i].numberOfSamples;
@@ -186,8 +184,7 @@ namespace XDft {
 
             /* back through the tone sequences to 
             ** adjust coefficients for unity gain and
-            ** skip over the slientSamples
-            */
+            ** skip over the slientSamples */
             int tonesInProgress = 0;
             double coefTotalRecip = 1. / coefTotal;
             for (unsigned i = 0; i < tones.size(); i++)
@@ -251,7 +248,7 @@ namespace XDft {
                 }
                 audioSamples[i++] = static_cast<short>(thisSample * 0x7FFF);
             }
-            audioSamples.insert(audioSamples.end(), SILENT_SAMPLES, 0);
+            audioSamples.insert(audioSamples.end(), TRAILING_SILENT_SAMPLES, 0);
             outputSink->AddMonoSoundFrames(&audioSamples[0], static_cast<unsigned>(audioSamples.size()));
             outputSink->AudioComplete();
         }
@@ -259,25 +256,27 @@ namespace XDft {
         GeneratorContextImpl::GeneratorContextImpl() 
             : m_samplesPerSymbol(0)
             , m_pulseScale(0)
+            , m_beginningSilentSamples(BEGINNING_SILENT_SAMPLES)
         {}
 
         GeneratorContext::~GeneratorContext() 
         {}
 
-        GeneratorContext*GeneratorContext::getFt8Context()
+        GeneratorContext*GeneratorContext::getFt8Context(unsigned short msecSilent)
         {  
             auto ret = new GeneratorContextFt8Impl();
-            ret->initialize();
-            return ret;
-        }
-        GeneratorContext*GeneratorContext::getFt4Context()
-        { 
-            auto ret =new GeneratorContextFt4Impl(); 
-            ret->initialize();
+            ret->initialize(msecSilent);
             return ret;
         }
 
-        void GeneratorContextImpl::initialize()
+        GeneratorContext*GeneratorContext::getFt4Context(unsigned short msecSilent)
+        { 
+            auto ret =new GeneratorContextFt4Impl(); 
+            ret->initialize(msecSilent);
+            return ret;
+        }
+
+        void GeneratorContextImpl::initialize(unsigned short msecSilent)
         {
             pulse.resize(PULSE_SYMBOL_WIDTH * m_samplesPerSymbol);
             float samplesPerSymbolRecip = 1.f / m_samplesPerSymbol;
@@ -286,13 +285,16 @@ namespace XDft {
                 float tt = static_cast<float>(i - PULSE_SYMBOL_WIDTH * 0.5f * m_samplesPerSymbol) * samplesPerSymbolRecip;
                 pulse[i] = gfsk_pulse_(&m_pulseScale, &tt);
             }
+            if (msecSilent != 0)
+                m_beginningSilentSamples = (msecSilent * AUDIO_SAMPLES_PER_SEC_OUT) / 1000;
          }
 
         void GeneratorContextImpl::computeAngles(const std::vector<int>&itones, int baseFrequency, std::vector<double> &deltaAngle)
         {
             if (itones.empty()) return;
-            double deltaPeak = TWO_PI / m_samplesPerSymbol;
             deltaAngle.resize(itones.size() * m_samplesPerSymbol);
+#if 1   // convolve with a gaussian
+            double deltaPeak = TWO_PI / m_samplesPerSymbol;
             for (unsigned j = 0; j < itones.size(); j++)
             {   // for each symbol. 
                 unsigned begin = j * m_samplesPerSymbol;
@@ -303,6 +305,18 @@ namespace XDft {
             }
             for (unsigned jj = 0; jj < deltaAngle.size(); jj++)
                 deltaAngle[jj] += (TWO_PI * baseFrequency) / AUDIO_SAMPLES_PER_SEC_OUT;
+#else   // This is the "old" way as in wsjtx-2.0. abrupt frequency change at the tone boundary.
+           double HzPerItone = static_cast<double>(AUDIO_SAMPLES_PER_SEC_OUT) / m_samplesPerSymbol;
+           unsigned jj = 0;
+           for (unsigned itoneIdx = 0; itoneIdx < itones.size(); itoneIdx++)
+           {
+               double toneHz = baseFrequency + itones[itoneIdx] * HzPerItone;
+               double delta = TWO_PI * toneHz / AUDIO_SAMPLES_PER_SEC_OUT;
+               for (unsigned j = 0; j < m_samplesPerSymbol; j++)
+                    deltaAngle[jj++] = delta;
+           }
+
+#endif
         }
 
         GeneratorContextFt8Impl::GeneratorContextFt8Impl()

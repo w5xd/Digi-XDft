@@ -32,7 +32,7 @@ namespace XDft {
             WsjtSharedMemory GetSharedMemory() const { return m_sharedMemory; }
 
             void SetDecodeLineFcn(const DecodeLineFcn_t&);
-            bool DecodeInProgress()const;
+            virtual bool DecodeInProgress()const;
             virtual void SetRunEnable(bool);
             void DecodeFinished();
             void Shutdown();
@@ -75,6 +75,7 @@ namespace XDft {
         public:
             Jt9ExeImpl();
             void SetRunEnable(bool)override;
+            bool DecodeInProgress()const override;
         protected:
             void ProcessStarting(const std::wstring &tempDir, WsjtSharedMemory sm) override;
             void SetQuit(bool)override;

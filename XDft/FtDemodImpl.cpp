@@ -4,6 +4,11 @@
 #include <XDencode.h>
 #include "StringConvert.h"
 namespace XDft { namespace impl {
+    namespace {
+        const unsigned short DEFAULT_PREZERO_MSEC = 100;
+        const unsigned SAMPLES_PER_SECOND = 12000;
+    }
+
     // Ft8DemoImpl's main job is to pass parameters 
     // and waveform data
     // to the FT8 decoder via its common block
@@ -19,6 +24,8 @@ namespace XDft { namespace impl {
         , m_sampleCbCount(0)
         , m_FtCycleNumber(-1)
 		, m_audioSampleCbThreadStop(false)
+        , m_StartDecodeBeforeUtcZeroMsec(DEFAULT_PREZERO_MSEC)
+        , m_DefaultDecodeShiftMsec(0)
 	{ 
         memset(m_FortranData.get(), 0, sizeof(struct dec_data));
         m_FortranData->params.n2pass = 2;   // from spying
@@ -85,9 +92,8 @@ namespace XDft { namespace impl {
     // in a UTC minute. A signal must begin at one of those
     // four, starting at 0 seconds, 15 seconds, 30s and 45s.
     // Reset() is called at that start. 
-	void FtDemodImpl::Reset()
+	void FtDemodImpl::Reset(const lock_t&)
 	{
-        lock_t l(m_mutex);
         m_FortranData->params.kin = 0; // supposedly the number of audio samples available
 		m_FortranData->params.napwid = 50;
         m_FortranData->params.newdat = false;
@@ -101,6 +107,12 @@ namespace XDft { namespace impl {
         m_decSamplesWritten = 0;
         m_lastCalledBackIndex = 0;
 	}
+
+    void FtDemodImpl::Reset()
+    {
+        lock_t l(m_mutex);
+        Reset(l);
+    }
 
 	void FtDemodImpl::SetDiskDat(bool v)
 	{   // have no clue why ft9.exe cares, but this
@@ -123,22 +135,22 @@ namespace XDft { namespace impl {
         m_FtCycleNumber = st.wSecond / m_TRperiod;
         cycle = m_FtCycleNumber;
         if (ftSecondNumber >= tickToTriggerDecode)
-            invokedDecode = Decode(f, jt9);
+            invokedDecode = Decode(f, jt9, m_FtCycleNumber, m_DefaultDecodeShiftMsec);
 
         if (ftSecondNumber == tickToTriggerDecode - 1)
         {   // the second before we trigger decode, reset the decoder...
             // ...should not be needed, but if it fails once, we'll never
             // invoke it again without this.
             jt9.SetRunEnable(false);
-            jt9.SetDecodeLineFcn();
+            jt9.DecodeFinished();
         }
 
         static const unsigned LISTEN_STARTUP_SECONDS = 1; // reset listen audio buffer this much early
+        lock_t lock(m_mutex);
         if ((ftSecondNumber == m_TRperiod - LISTEN_STARTUP_SECONDS) && !m_resetThisInterval)
         {
             // Clock() is not called on any particular accurate time sequence.
-            // Here we have noticed that we're in the final LISTEN_STARTUP_SECONDS of FT8's
-            // 15 second sequence.
+            // Here we have noticed that we're in the final LISTEN_STARTUP_SECONDS of m_TRperiod
             //
             // setup m_timepointToTruncate to mark when we want the "real" recording to start.
             FILETIME ft;
@@ -157,11 +169,18 @@ namespace XDft { namespace impl {
             // ft is now the exact second specified by FT8...but lets start the sound a little early.
             calc.HighPart = ft.dwHighDateTime;
             calc.LowPart = ft.dwLowDateTime;
-            static const unsigned MSEC_BEFORE = 100;
             static const unsigned long long FtimePerMsec = 10000ull;
-            calc.QuadPart -= MSEC_BEFORE * FtimePerMsec; // 
+            calc.QuadPart -= m_StartDecodeBeforeUtcZeroMsec * FtimePerMsec; 
             m_timepointToTruncate = calc;
             m_clipSoundToTimepoint = true;
+
+#ifdef _DEBUG
+            {
+                SYSTEMTIME stDebug;
+                ::FileTimeToSystemTime(reinterpret_cast<FILETIME*>(&m_timepointToTruncate), &stDebug);
+                stDebug.wDay += 0;
+            }
+#endif
 
             // we have toTruncate set to the time want. use it to calculate nutc;
             int nutc = toTruncate.wHour;
@@ -170,9 +189,9 @@ namespace XDft { namespace impl {
             nutc *= 100;
             nutc += toTruncate.wSecond;
             m_FortranData->params.nutc = nutc;
-
-            Reset();  // FT8 signals in sync with the UTC clock
             m_resetThisInterval = true;
+
+            Reset(lock);  // FT8 signals in sync with the UTC clock
         }
         else
             m_resetThisInterval = false;
@@ -216,7 +235,6 @@ namespace XDft { namespace impl {
     // wav file playback or real time audio calls here.
 	bool FtDemodImpl::AddMonoSoundFrames12KHz(const short *p, unsigned nSamples)
 	{
-		static const unsigned SAMPLES_PER_SECOND = 12000;
 		static const unsigned capacitySamples = sizeof(dec_data.d2) / sizeof(dec_data.d2[0]);
 		lock_t l(m_mutex);
 		unsigned availableSamples = capacitySamples - m_decSamplesWritten;
@@ -229,8 +247,8 @@ namespace XDft { namespace impl {
 			memcpy(&m_FortranData->d2[m_decSamplesWritten], p, nSamples * sizeof(*p));
 			m_decSamplesWritten += nSamples;
 			if (m_clipSoundToTimepoint)
-			{   // we're close to the begging of a 15 second interval. If we're past the
-                // beginning, then truncate recently received audio to that exat time.
+			{   // we're close to the beginning of a decode cycle. If we're past the
+                // beginning, then truncate recently received audio to that exact time.
 				FILETIME ftNow;
 				GetSystemTimeAsFileTime(&ftNow);
 				ULARGE_INTEGER ftTarget;
@@ -308,22 +326,23 @@ namespace XDft { namespace impl {
     // invoke the FT8 decoder in the subprocess executable.
     // it responds with <DecoderFinished>
     // return early if the previous one hasn't finished.
-	bool FtDemodImpl::Decode(const DecodeClientFcn_t&f, WsjtExe jt9)
+	bool FtDemodImpl::Decode(const DecodeClientFcn_t&f, WsjtExe jt9, int cycleNumber, unsigned short atOffsetMsec)
 	{
 		if (!jt9.IsValid())
 			return false;
         if (jt9.DecodeInProgress())
             return false;
-        int cycleNumber = m_FtCycleNumber;
+        if (cycleNumber != m_FtCycleNumber)
+            return false;
 		jt9.SetDecodeLineFcn(
             [this, f, jt9, cycleNumber](const std::string &s)
 		    {   // on stdout line from jt9, this lambda is called
 			    if (s.find("<DecodeFinished>") != s.npos)
 			    {
 				    jt9.SetRunEnable(false);
+                    jt9.DecodeFinished();
 				    if (f)
 					    f("", cycleNumber);
-                    jt9.DecodeFinished();
                 }
 			    else if (f)
 				    f(s, cycleNumber);
@@ -334,6 +353,15 @@ namespace XDft { namespace impl {
             lock_t l(m_mutex);
             struct dec_data *commonBlock = jt9.GetSharedMemory().GetWsjtCommonBlock();
             memcpy(commonBlock, m_FortranData.get(), sizeof(struct dec_data));
+            // if caller wants the sound offset, then do that
+            unsigned samplesToRemove = (atOffsetMsec * SAMPLES_PER_SECOND) / 1000;
+            if ((samplesToRemove != 0) && (commonBlock->params.kin > static_cast<int>(samplesToRemove)))
+            {
+                memmove(&commonBlock->d2[0], &commonBlock->d2[samplesToRemove], 
+                    sizeof(dec_data.d2[0]) * (commonBlock->params.kin - samplesToRemove));
+                commonBlock->params.kin -= samplesToRemove;
+                memset(&commonBlock->d2[commonBlock->params.kin], 0, samplesToRemove * sizeof(dec_data.d2[0]));
+            }
             m_FortranData->params.newdat = false;
         }
 
@@ -368,6 +396,18 @@ namespace XDft { namespace impl {
             throw std::runtime_error("Initialize Audio Processor failed");
     }
 	
+    void FtDemodImpl::set_DemodPreZeroMsec(short v)
+    { m_StartDecodeBeforeUtcZeroMsec = v;    }
+
+    short FtDemodImpl::get_DemodPreZeroMsec()
+    {   return m_StartDecodeBeforeUtcZeroMsec;    }
+
+    void FtDemodImpl::set_DefaultDecodeShiftMsec(unsigned short v)
+    { m_DefaultDecodeShiftMsec = v;    }
+
+    unsigned short FtDemodImpl::get_DefaultDecodeShiftMsec()
+    {   return m_DefaultDecodeShiftMsec;    }
+
     // we do NOT bother to lock our m_mutex below
     // under the assumption that the caller is going to use one (GUI-based) thread
     // to set all the decoding parameters.
@@ -418,6 +458,24 @@ namespace XDft { namespace impl {
 
     void FtDemodImpl::set_nexp_decode(int v)
     {  m_FortranData->params.nexp_decode = v; }
+
+    int FtDemodImpl::get_nQSOProgress()
+    {   return m_FortranData->params.nQSOProgress; }
+    
+    void FtDemodImpl::set_nQSOProgress(int v)
+    {  m_FortranData->params.nQSOProgress = v; }
+    
+    int FtDemodImpl::get_nzhsym()
+    {   return m_FortranData->params.nzhsym; }
+    
+    void FtDemodImpl::set_nzhsym(int v)
+    {  m_FortranData->params.nzhsym = v; }
+
+    int FtDemodImpl::get_npts8()
+    {   return m_FortranData->params.npts8; }
+    
+    void FtDemodImpl::set_npts8(int v)
+    {  m_FortranData->params.npts8 = v; }
 
     void FtDemodImpl::set_mycall(const std::string &v)
     {

@@ -12,12 +12,18 @@ namespace XDft {
             ~FtDemodImpl();
             void SetDiskDat(bool);
             bool AddMonoSoundFrames12KHz(const short *p, unsigned count);
-            bool Decode(const DecodeClientFcn_t&, WsjtExe);
+            bool Decode(const DecodeClientFcn_t&, WsjtExe, int cycleNumber, unsigned short atOffsetMsec = 0);
             unsigned Clock(unsigned tickToTriggerDecode, const DecodeClientFcn_t&f, WsjtExe, 
                 bool &invokedDecode, int &cycleNumber);
             unsigned GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb);
             void SetAudioSamplesCallback(const AudioCbFcn_t&, unsigned sampleInterval, unsigned sampleCount,
                 void *AudioProcessor);
+
+            void set_DemodPreZeroMsec(short);
+            short get_DemodPreZeroMsec();
+            void set_DefaultDecodeShiftMsec(unsigned short);
+            unsigned short get_DefaultDecodeShiftMsec();
+            void Reset();
 
             void set_nfa(int);
             int get_nfa();
@@ -35,6 +41,12 @@ namespace XDft {
             bool get_lft8apon();
             void set_nexp_decode(int);
             int get_nexp_decode();
+            int get_nQSOProgress();
+            void set_nQSOProgress(int);
+            int get_nzhsym();
+            void set_nzhsym(int);
+            int get_npts8();
+            void set_npts8(int);
             void set_mycall(const std::string &);
             std::string get_mycall();
             void set_hiscall(const std::string &);
@@ -42,15 +54,18 @@ namespace XDft {
             DigiMode get_digiMode();
             void set_digiMode(DigiMode);
 
-            void Reset();
+            int CycleNumber() const { return m_FtCycleNumber; }
         private:
             typedef std::unique_lock<std::mutex> lock_t;
+            void Reset(const lock_t&);
 			void CancelCallbackThread();
 			void AudioSampleCbThread();
             std::unique_ptr<struct dec_data> m_FortranData;
             unsigned m_sampleCbInterval;
             unsigned m_sampleCbCount;
             unsigned m_lastCalledBackIndex;
+            short m_StartDecodeBeforeUtcZeroMsec;
+            unsigned short m_DefaultDecodeShiftMsec;
             int	 m_decSamplesWritten;
             int  m_TRperiod;
             int  m_FtCycleNumber;

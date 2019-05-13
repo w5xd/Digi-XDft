@@ -9,14 +9,15 @@ namespace XDft {
             std::vector<int>itone;
             float coefficient;
             int frequency;
+            unsigned short delayMsec;
         };
 
         class GeneratorContext
         {
         public:
              virtual ~GeneratorContext();
-             static GeneratorContext *getFt8Context();
-             static GeneratorContext *getFt4Context();
+             static GeneratorContext *getFt8Context(unsigned short);
+             static GeneratorContext *getFt4Context(unsigned short);
         };
 
        

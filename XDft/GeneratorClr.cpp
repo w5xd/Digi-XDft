@@ -18,15 +18,15 @@ namespace XDft {
     Tone::Tone() : coefficient(1.f)
         , itone(nullptr)
         , frequency(1000)
-    {
-    }
+        , delayMsec(0)
+    { }
 
-    Tone::Tone(array<int>^ tones, float coef, int f)
+    Tone::Tone(array<int>^ tones, float coef, int f, unsigned short delay)
         : coefficient(coef)
         , itone(tones)
         , frequency(f)
-    {
-    }
+        , delayMsec(delay)
+    {}
 
 	void Generator::genft8(System::String ^msg, System::String ^%msgSent, 
 		array<int> ^%itoneOut, array<bool> ^%ft8bits)
@@ -216,6 +216,7 @@ namespace XDft {
             {
                 toPlay[i].coefficient = itones[i]->coefficient;
                 toPlay[i].frequency = itones[i]->frequency;
+                toPlay[i].delayMsec = itones[i]->delayMsec;
                 std::vector<int> &tones=toPlay[i].itone;
                 tones.resize(itones[i]->itone->Length);
                 pin_ptr<int> pPin = &itones[i]->itone[0];
@@ -229,11 +230,11 @@ namespace XDft {
         }
     }
 
-    GeneratorContext ^GeneratorContext::getFt4Context()
-    { return gcnew GeneratorContext(impl::GeneratorContext::getFt4Context());   }
+    GeneratorContext ^GeneratorContext::getFt4Context(unsigned short msecSilent)
+    { return gcnew GeneratorContext(impl::GeneratorContext::getFt4Context(msecSilent));   }
 
-    GeneratorContext ^GeneratorContext::getFt8Context()
-    {     return gcnew GeneratorContext(impl::GeneratorContext::getFt8Context());   }
+    GeneratorContext ^GeneratorContext::getFt8Context(unsigned short msecSilent)
+    {     return gcnew GeneratorContext(impl::GeneratorContext::getFt8Context(msecSilent));   }
 
     GeneratorContext::~GeneratorContext()
     {   delete m_impl;   }

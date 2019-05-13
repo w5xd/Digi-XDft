@@ -47,6 +47,12 @@ namespace XDft {
             bool %invokedDecode,
             int %cycleNumber);
 
+        // Clock calls the decoder with the recorded time axis origin set to DemodulateDefaultSoundShiftMsec
+        // DecodeAgain can be used to change that origin.
+        // It must be on the same cycle its already on, and with the decoder not active.
+        // else it just returns false
+        bool DecodeAgain(WsjtExeBase ^wsjtExe, int cycleNumber, unsigned short msecOffset);
+
         /* This call uses a FORTRAN common block in the wsjtx-2.0.0 code. 
         ** It is not reentrant, which means you may only call this function from ONE instance
         ** of a Demodulator. 
@@ -65,6 +71,11 @@ namespace XDft {
 			// to free the pointer with a call to ReleaseProcessor
         );
 
+        // how much sound before UTC second of cycle start available to decoder
+        property short DemodulateSoundPreUtcZeroMsec { short get(); void set(short); }
+        // how much of that pre-UTC second beginning sound to exclude from Clock()
+        property unsigned short DemodulateDefaultSoundShiftMsec { unsigned short get(); void set(unsigned short); }
+
         property DemodResult^ DemodulatorResultCallback { DemodResult^ get(); void set(DemodResult^); }
         
         // parameters in FORTRAN common block that appear to affect FT8 decoding. names in wsjtx source
@@ -76,6 +87,9 @@ namespace XDft {
         property int nftx { int get(); void set(int); }
         property bool lft8apon { bool get(); void set(bool); }
         property int nexp_decode { int get(); void set(int); }
+        property int nQSOProgress { int get(); void set(int); }
+        property int nzhsym { int get(); void set(int); }
+        property int npts8 { int get(); void set(int); }
         property System::String^ mycall {System::String^get(); void set(System::String^); }
         property System::String^ hiscall {System::String^get(); void set(System::String^); }
         property DigiMode digiMode { DigiMode get(); void set(DigiMode); }

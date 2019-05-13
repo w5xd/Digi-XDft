@@ -28,7 +28,7 @@ namespace XDft { namespace impl {
         , m_hChildStd_OUT_Wr(0)
         , m_stop(false)
         , m_running(false)
-        , m_decodeNotifiedFinished(false)
+        , m_decodeNotifiedFinished(true)
 	{}
 
 	WsjtExeImplBase::~WsjtExeImplBase()
@@ -272,17 +272,14 @@ namespace XDft { namespace impl {
 		}
 	}
 
-     bool WsjtExeImplBase::DecodeInProgress() const
+    bool WsjtExeImplBase::DecodeInProgress() const
     {
         if (WAIT_OBJECT_0 == WaitForSingleObject(m_pi.hProcess, 0))
             throw std::runtime_error(WideToMultiByte(m_exeName) + " process has exited");
         lock_t l(m_mutex);
         if (static_cast<bool>(m_decodeLineFcn))
             return true;
-        if (!m_decodeNotifiedFinished)
-            return false;
-        bool ret = std::chrono::steady_clock::now() - m_timeNotifiedFinished < WAIT_AFTER_DECODE_DONE;
-        return ret;
+        return !m_decodeNotifiedFinished;
     }
     
     void WsjtExeImplBase::SetDecodeLineFcn(const DecodeLineFcn_t &f)
@@ -398,6 +395,14 @@ namespace XDft { namespace impl {
             else
                 ::DeleteFileW(m_quitFilePath.c_str());
         }
+    }
+
+    bool Jt9ExeImpl::DecodeInProgress() const
+    {   // keep the lock file on the disk at least WAIT_AFTER_DECODE_DONE
+        bool ret = WsjtExeImplBase::DecodeInProgress();
+        if (!ret)
+            ret = std::chrono::steady_clock::now() - m_timeNotifiedFinished < WAIT_AFTER_DECODE_DONE;
+        return ret;
     }
 
 }}

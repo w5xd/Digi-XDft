@@ -5,10 +5,11 @@ namespace XDft {
     public ref class Tone {
     public:
         Tone();
-        Tone(array<int>^ tones, float coef, int frequency);
+        Tone(array<int>^ tones, float coef, int frequency, unsigned short delayMsec);
         float coefficient;
         array<int>^itone;
         int frequency;
+        unsigned short delayMsec;
     };
 
     namespace impl {
@@ -18,8 +19,9 @@ namespace XDft {
     public ref class GeneratorContext
     {
     public:
-        static GeneratorContext ^getFt8Context();
-        static GeneratorContext ^getFt4Context();
+        // zero argument to msecSilent does not get zero. It gets default
+        static GeneratorContext ^getFt8Context(unsigned short msecSilent);
+        static GeneratorContext ^getFt4Context(unsigned short msecSilent);
         ~GeneratorContext();
         impl::GeneratorContext *getImpl() { return m_impl; }
     protected:

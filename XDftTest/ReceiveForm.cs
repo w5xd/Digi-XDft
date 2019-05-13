@@ -75,6 +75,8 @@ namespace XDftTest
             // Don't ask this author what they mean.
             demodulator.nftx = 1500;
             demodulator.nfqso = 1500;
+            demodulator.nQSOProgress = 5;
+            demodulator.nzhsym = digiMode == XDft.DigiMode.DIGI_FT8 ? 50 : 18;
             mycall = sf.myCall.ToUpper();
             demodulator.mycall = mycall;
             if (xmitForm != null)

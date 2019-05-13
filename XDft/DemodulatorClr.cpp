@@ -152,6 +152,27 @@ namespace XDft {
         }
     }
 
+    bool Demodulator::DecodeAgain(WsjtExeBase ^wsjt, int cycleNumber, unsigned short msecOffset)
+    {
+        try 
+        {
+            if (m_Ft8Demod->IsValid())
+            {
+                impl::DecodeClientFcn_t f;
+                if (nullptr != m_demodResult)
+                    f = std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2,
+                        System::Runtime::InteropServices::Marshal::
+                        GetFunctionPointerForDelegate <DemodResult^>(m_demodResult).ToInt64());
+                return m_Ft8Demod->DecodeAgain(f, wsjt->GetImpl(), cycleNumber, msecOffset);
+            }
+            return false;
+        }
+        catch (const std::exception &e)
+        {
+            throw gcnew System::Exception(gcnew System::String(e.what()));
+        }    
+    }
+
     unsigned Demodulator::GetSignalSpectrum(array<float> ^spectrum, float %powerMeter)
     {
         if (nullptr == spectrum)
@@ -168,7 +189,32 @@ namespace XDft {
             throw gcnew System::Exception(gcnew System::String(e.what()));
         }
     }
-	
+
+    short Demodulator::DemodulateSoundPreUtcZeroMsec::get()
+    {
+        if (m_Ft8Demod->IsValid())
+            return m_Ft8Demod->get_DemodPreZeroMsec();
+        return 0;
+    }
+
+    void Demodulator::DemodulateSoundPreUtcZeroMsec::set(short v)
+    {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_DemodPreZeroMsec(v);
+    }
+
+    unsigned short Demodulator::DemodulateDefaultSoundShiftMsec::get()
+    {
+        if (m_Ft8Demod->IsValid())
+            return m_Ft8Demod->get_DefaultDecodeShiftMsec();
+        return 0;
+    }
+
+    void Demodulator::DemodulateDefaultSoundShiftMsec::set(unsigned short v)
+    {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_DefaultDecodeShiftMsec(v);
+    }
     int Demodulator::nfa::get() {
         if (m_Ft8Demod->IsValid())
             return m_Ft8Demod->get_nfa();
@@ -255,6 +301,39 @@ namespace XDft {
     void Demodulator::nexp_decode::set(int v) {
         if (m_Ft8Demod->IsValid())
             m_Ft8Demod->set_nexp_decode(v);
+    }
+ 
+    int Demodulator::nQSOProgress::get() {
+        if (m_Ft8Demod->IsValid())
+            return m_Ft8Demod->get_nQSOProgress();
+        return false;
+    }
+
+    void Demodulator::nQSOProgress::set(int v) {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_nQSOProgress(v);
+    }
+
+   int Demodulator::nzhsym::get() {
+        if (m_Ft8Demod->IsValid())
+            return m_Ft8Demod->get_nzhsym();
+        return false;
+    }
+
+    void Demodulator::nzhsym::set(int v) {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_nzhsym(v);
+    }
+
+   int Demodulator::npts8::get() {
+        if (m_Ft8Demod->IsValid())
+            return m_Ft8Demod->get_npts8();
+        return false;
+    }
+
+    void Demodulator::npts8::set(int v) {
+        if (m_Ft8Demod->IsValid())
+            m_Ft8Demod->set_npts8(v);
     }
 
     System::String^ Demodulator::mycall::get() {

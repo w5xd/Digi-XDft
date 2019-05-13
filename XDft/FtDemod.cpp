@@ -60,15 +60,25 @@ namespace XDft { namespace impl {
 	bool FtDemod::AddMonoSoundFrames12KHz(const short *p, unsigned count)
 	{		return m_impl->AddMonoSoundFrames12KHz(p, count);	}
 	void FtDemod::Decode(const DecodeClientFcn_t &f, WsjtExe ex)const
-	{		m_impl->Decode(f, ex);	}
+	{		m_impl->Decode(f, ex, m_impl->CycleNumber());	}
     unsigned FtDemod::Clock(unsigned t, const DecodeClientFcn_t &f, WsjtExe ex, 
         bool &invokedDecode, int &cy)
     {       return m_impl->Clock(t, f, ex, invokedDecode, cy);    }
+    bool FtDemod::DecodeAgain(const DecodeClientFcn_t&f, WsjtExe w, int cycleNumber, unsigned short msecOffset)
+    {   return m_impl->Decode(f, w, cycleNumber, msecOffset);}
     unsigned FtDemod::GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb)
     {   return m_impl->GetSignalSpectrum(pSpectrum, numPoints, powerDb);  }
     void FtDemod::SetAudioSamplesCallback(const AudioCbFcn_t&f, unsigned si, unsigned sc,
         void *AudioProcessor)
     {        m_impl->SetAudioSamplesCallback(f, si, sc, AudioProcessor);    }
+    void FtDemod::set_DemodPreZeroMsec(short v)
+    {  return m_impl->set_DemodPreZeroMsec(v);   }
+    short FtDemod::get_DemodPreZeroMsec()
+    {        return m_impl->get_DemodPreZeroMsec();  }
+     void FtDemod::set_DefaultDecodeShiftMsec(unsigned short v)
+    {  return m_impl->set_DefaultDecodeShiftMsec(v);   }
+    unsigned short FtDemod::get_DefaultDecodeShiftMsec()
+    {        return m_impl->get_DefaultDecodeShiftMsec();  }
     void FtDemod::Reset() { m_impl->Reset(); }
     void FtDemod::set_nfa(int v) { m_impl->set_nfa(v); }
     int FtDemod::get_nfa() { return     m_impl->get_nfa(); }
@@ -86,6 +96,12 @@ namespace XDft { namespace impl {
     int FtDemod::get_nftx() { return     m_impl->get_nftx(); }
     void FtDemod::set_nexp_decode(int v) { m_impl->set_nexp_decode(v); }
     int FtDemod::get_nexp_decode() { return     m_impl->get_nexp_decode(); }
+    void FtDemod::set_nQSOProgress(int v) { m_impl->set_nQSOProgress(v); }
+    int FtDemod::get_nQSOProgress() { return     m_impl->get_nQSOProgress(); }
+    void FtDemod::set_nzhsym(int v) { m_impl->set_nzhsym(v); }
+    int FtDemod::get_nzhsym() { return     m_impl->get_nzhsym(); }
+    void FtDemod::set_npts8(int v) { m_impl->set_npts8(v); }
+    int FtDemod::get_npts8() { return     m_impl->get_npts8(); }
     void FtDemod::set_mycall(const std::string &v) { m_impl->set_mycall(v); }
     std::string FtDemod::get_mycall() { return m_impl->get_mycall(); }
     void FtDemod::set_hiscall(const std::string &v) { m_impl->set_hiscall(v); }

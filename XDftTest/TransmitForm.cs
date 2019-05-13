@@ -24,9 +24,7 @@ namespace XDftTest
     public partial class TransmitForm : Form
     {
         public TransmitForm()
-        {
-            InitializeComponent();
-        }
+        { InitializeComponent();  }
 
         private void TransmitForm_Load(object sender, EventArgs e)
         {
@@ -36,14 +34,14 @@ namespace XDftTest
             foreach (var s in wavesOut)
                 comboBoxWaveOut.Items.Add(s);
             comboBoxWaveOut.SelectedIndex = 0;
-
+            ushort msecDelay = 0;
             switch (digiMode)
             {
                 case XDft.DigiMode.DIGI_FT8:
-                     generatorContext = XDft.GeneratorContext.getFt8Context();
+                     generatorContext = XDft.GeneratorContext.getFt8Context(msecDelay);
                     break;
                 case XDft.DigiMode.DIGI_FT4:
-                    generatorContext = XDft.GeneratorContext.getFt4Context();
+                    generatorContext = XDft.GeneratorContext.getFt4Context(msecDelay);
                     break;
             }
         }
@@ -100,6 +98,16 @@ namespace XDftTest
         }
         private XDft.GeneratorContext generatorContext;
 
+        private void initializeDeviceTx()
+        {
+            if (null == deviceTx)
+            {
+                deviceTx = new XD.WaveDeviceTx();
+                deviceTx.Open((uint)selectedDevice, (uint)selectedChannel);
+                deviceTx.SoundSyncCallback = new XD.SoundBeginEnd(AudioBeginEnd);
+            }
+        }
+
         void SendSoundFromTextToDevice(XD.Transmit_Cycle ft)
         {
             // given text that has been through genft8, send it to Generator.Play
@@ -108,29 +116,10 @@ namespace XDftTest
             buttonXmitNow.Enabled = false;
             buttonOdd.Enabled = false;
             buttonEven.Enabled = false;
-            if (null == deviceTx)
-            {
-                deviceTx = new XD.WaveDeviceTx();
-                deviceTx.Open((uint)selectedDevice, (uint)selectedChannel);
-                deviceTx.SoundSyncCallback = new XD.SoundBeginEnd(AudioBeginEnd);
-            }
+            initializeDeviceTx();
             deviceTx.TransmitCycle = ft;
-#if true
             XDft.Generator.Play(generatorContext, itone, (int)numericUpDownFrequency.Value,
                  deviceTx.GetRealTimeAudioSink());
-#else   // play multiple
-            List<XDft.Tone> tones = new List<XDft.Tone>();
-            tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
-
-            String sent = null;
-            bool[] ft8bits = null;
-            int[] it = null;
-            XDft.Generator.genft8(
-                            "TEST",
-                            ref sent, ref it, ref ft8bits);
-            tones.Add(new XDft.Tone(it, 1, (int)numericUpDownFrequency.Value + 100));
-            XDft.Generator.Play(tones.ToArray(), deviceTx.GetRealTimeAudioSink());
-#endif
         }
 
         private void buttonXmitNow_Click(object sender, EventArgs e)
@@ -139,11 +128,11 @@ namespace XDftTest
         }
         private void buttonOdd_Click(object sender, EventArgs e)
         {
-            SendSoundFromTextToDevice(XD.Transmit_Cycle.PLAY_ODD_15S);
+            SendSoundFromTextToDevice(digiMode == XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_ODD_15S : XD.Transmit_Cycle.PLAY_ODD_6S);
         }
         private void buttonEven_Click(object sender, EventArgs e)
         {
-            SendSoundFromTextToDevice(XD.Transmit_Cycle.PLAY_EVEN_15S);
+            SendSoundFromTextToDevice(digiMode== XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_EVEN_15S : XD.Transmit_Cycle.PLAY_EVEN_6S);
         }
 
         private void AudioBeginEnd(bool isBeginning)
@@ -204,17 +193,84 @@ namespace XDftTest
             fd.Filter = "Wave Files (*.wav)|*.wav";
             if (fd.ShowDialog() == DialogResult.OK)
             {
-#if true
                 XDft.Generator.Play(generatorContext, itone, (int)numericUpDownFrequency.Value,
                     XD.FileDeviceTx.Open(fd.FileName));
-#else
-                List<XDft.Tone> tones = new List<XDft.Tone>();
-                tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value));
-                tones.Add(new XDft.Tone(itone, 1, (int)numericUpDownFrequency.Value + 100));
-                XDft.Generator.Play(generatorContext, tones.ToArray(), XD.FileDeviceTx.Open(fd.FileName));
-#endif
             }
         }
 
+        private void buttonMultistreamTest_Click(object sender, EventArgs e)
+        {
+            var res = MessageBox.Show("Play to device? else to file?", "XDftTest Multi stream test message", MessageBoxButtons.YesNoCancel);
+            IntPtr sink = IntPtr.Zero;
+            if (res == DialogResult.Yes)
+            {
+                initializeDeviceTx();
+                sink = deviceTx.GetRealTimeAudioSink();
+                deviceTx.TransmitCycle = digiMode == XDft.DigiMode.DIGI_FT4 ? XD.Transmit_Cycle.PLAY_EVEN_6S : XD.Transmit_Cycle.PLAY_EVEN_15S;
+            }
+            else if (res == DialogResult.No)
+            {
+                var fd = new SaveFileDialog();
+                fd.Title = "Select .wav file of audio to transmit.";
+                fd.Filter = "Wave Files (*.wav)|*.wav";
+                if (fd.ShowDialog() == DialogResult.OK)
+                    sink = XD.FileDeviceTx.Open(fd.FileName);
+            }
+            if (sink != IntPtr.Zero)
+            {
+                List<XDft.Tone> tones = new List<XDft.Tone>();
+                const int NUMBER_OF_STREAMS = 20;
+                const int LOWEST_FREQUENCY = 400;
+                const ushort START_DELAY_FT4 = (ushort)5400;
+                const ushort START_DELAY_FT8 = (ushort)14500;
+
+                int frequency = LOWEST_FREQUENCY;
+                ushort delayMsec = digiMode == XDft.DigiMode.DIGI_FT4 ? START_DELAY_FT4 : START_DELAY_FT8;
+                Random rand = new Random();
+
+                int [] frequencies = new int[NUMBER_OF_STREAMS];
+                for (int i = 0; i < NUMBER_OF_STREAMS; i++)
+                {
+                    frequencies[i] = frequency;
+                    frequency += digiMode == XDft.DigiMode.DIGI_FT4 ? 102 : 61;
+                }
+
+                for (int i = 0; i < 100; i++)
+                {   // shuffle
+                    int idx1 = rand.Next(0, NUMBER_OF_STREAMS-1);
+                    int idx2 = rand.Next(0, NUMBER_OF_STREAMS - 1);
+                    int temp = frequencies[idx1];
+                    frequencies[idx1] = frequencies[idx2];
+                    frequencies[idx2] = temp;
+                }
+
+                for (int i = 0; i < NUMBER_OF_STREAMS; i++)
+                {
+                    string msgText = String.Format("Test num {0}", i+1);
+                    string sent = "";
+                    bool[] ftbits = null;
+                    int[] testTones = null;
+                    float amplitude = (float)rand.NextDouble();
+                    amplitude *= amplitude * amplitude;
+                    switch (digiMode)
+                    {
+                        case XDft.DigiMode.DIGI_FT8:
+                            XDft.Generator.genft8(
+                                msgText,
+                                ref sent, ref testTones, ref ftbits);
+                            break;
+                        case XDft.DigiMode.DIGI_FT4:
+                            XDft.Generator.genft4(
+                                msgText,
+                                ref sent, ref testTones, ref ftbits);
+                            break;
+                    }
+                    tones.Add(new XDft.Tone(testTones, amplitude, frequencies[i], delayMsec));
+                    delayMsec += 202;
+                }
+
+                XDft.Generator.Play(generatorContext, tones.ToArray(), sink);
+            }
+        }
     }
 }

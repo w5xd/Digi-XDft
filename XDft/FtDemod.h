@@ -19,11 +19,16 @@ namespace XDft {
         void Decode(const DecodeClientFcn_t&, WsjtExe)const;
         unsigned Clock(unsigned tickToTrigger, const DecodeClientFcn_t&, WsjtExe, 
             bool &invokedDecode, int &cycleNumber);
+        bool DecodeAgain(const DecodeClientFcn_t&, WsjtExe, int cycleNumber, unsigned short msecOffset);
         void SetAudioSamplesCallback(const AudioCbFcn_t&, unsigned sampleInterval, unsigned sampleCount,
             void *nativeProcessor);
         unsigned GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb);
         void Reset();
 		void *GetRxSink(const AudioCompleteFcn_t &completion=AudioCompleteFcn_t());
+        void set_DemodPreZeroMsec(short);
+        short get_DemodPreZeroMsec();
+        void set_DefaultDecodeShiftMsec(unsigned short);
+        unsigned short get_DefaultDecodeShiftMsec();
 
         void set_nfa(int);
         int get_nfa();
@@ -41,6 +46,12 @@ namespace XDft {
         int get_nftx();
         void set_nexp_decode(int);
         int get_nexp_decode();
+        void set_nQSOProgress(int);
+        int get_nQSOProgress();
+        int get_nzhsym();
+        void set_nzhsym(int);
+        int get_npts8();
+        void set_npts8(int);
         void set_mycall(const std::string &);
         std::string get_mycall();
         void set_hiscall(const std::string &);
