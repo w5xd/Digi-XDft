@@ -128,11 +128,11 @@ namespace XDftTest
         }
         private void buttonOdd_Click(object sender, EventArgs e)
         {
-            SendSoundFromTextToDevice(digiMode == XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_ODD_15S : XD.Transmit_Cycle.PLAY_ODD_6S);
+            SendSoundFromTextToDevice(digiMode == XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_ODD_15S : XD.Transmit_Cycle.PLAY_ODD_8PER_MIN);
         }
         private void buttonEven_Click(object sender, EventArgs e)
         {
-            SendSoundFromTextToDevice(digiMode== XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_EVEN_15S : XD.Transmit_Cycle.PLAY_EVEN_6S);
+            SendSoundFromTextToDevice(digiMode== XDft.DigiMode.DIGI_FT8 ?  XD.Transmit_Cycle.PLAY_EVEN_15S : XD.Transmit_Cycle.PLAY_EVEN_8PER_MIN);
         }
 
         private void AudioBeginEnd(bool isBeginning)
@@ -206,7 +206,7 @@ namespace XDftTest
             {
                 initializeDeviceTx();
                 sink = deviceTx.GetRealTimeAudioSink();
-                deviceTx.TransmitCycle = digiMode == XDft.DigiMode.DIGI_FT4 ? XD.Transmit_Cycle.PLAY_EVEN_6S : XD.Transmit_Cycle.PLAY_EVEN_15S;
+                deviceTx.TransmitCycle = digiMode == XDft.DigiMode.DIGI_FT4 ? XD.Transmit_Cycle.PLAY_EVEN_8PER_MIN : XD.Transmit_Cycle.PLAY_EVEN_15S;
             }
             else if (res == DialogResult.No)
             {
@@ -266,7 +266,7 @@ namespace XDftTest
                             break;
                     }
                     tones.Add(new XDft.Tone(testTones, amplitude, frequencies[i], delayMsec));
-                    delayMsec += 202;
+                    delayMsec += 102;
                 }
 
                 XDft.Generator.Play(generatorContext, tones.ToArray(), sink);

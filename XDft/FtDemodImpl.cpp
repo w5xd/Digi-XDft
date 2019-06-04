@@ -14,9 +14,10 @@ namespace XDft { namespace impl {
     // to the FT8 decoder via its common block
 	FtDemodImpl::FtDemodImpl()
 		: m_FortranData(new struct dec_data) 
-		, m_TRperiod(15)
+		, m_TRperiodTenths(150)
         , m_decSamplesWritten(0)
         , m_resetThisInterval(true)
+        , m_runEnabledThisInterval(false)
         , m_timepointToTruncate({})
         , m_clipSoundToTimepoint(false)
         , m_lastCalledBackIndex(0)
@@ -97,7 +98,7 @@ namespace XDft { namespace impl {
         m_FortranData->params.kin = 0; // supposedly the number of audio samples available
 		m_FortranData->params.napwid = 50;
         m_FortranData->params.newdat = false;
-        m_FortranData->params.ntrperiod = m_TRperiod;
+        m_FortranData->params.ntrperiod = m_TRperiodTenths/10;
         // seems that the kin value in the common block is
         // ignored by the fortran ft8 decoder. 
         // That means it reads EVERYTHING in the
@@ -124,79 +125,89 @@ namespace XDft { namespace impl {
 	}
 
     // client must call here periodically. We check the UTC
-    // clock and synchronize the ft8 decoder to the 15 second interval.
+    // clock and synchronize the ft decoder to the m_TRperiodTenths tenth-second interval.
     unsigned FtDemodImpl::Clock(unsigned tickToTriggerDecode, const DecodeClientFcn_t&f,
 		WsjtExe jt9, bool &invokedDecode, int &cycle)
     {
         invokedDecode = false;
         SYSTEMTIME st;
         GetSystemTime(&st);
-        unsigned ftSecondNumber = st.wSecond % m_TRperiod;
-        m_FtCycleNumber = st.wSecond / m_TRperiod;
+        WORD seconds10 = st.wSecond * 10 + st.wMilliseconds / 100;
+        unsigned ft10thSecondNumber = seconds10 % m_TRperiodTenths;
+        m_FtCycleNumber = seconds10 / m_TRperiodTenths;
         cycle = m_FtCycleNumber;
-        if (ftSecondNumber >= tickToTriggerDecode)
-            invokedDecode = Decode(f, jt9, m_FtCycleNumber, m_DefaultDecodeShiftMsec);
 
-        if (ftSecondNumber == tickToTriggerDecode - 1)
-        {   // the second before we trigger decode, reset the decoder...
-            // ...should not be needed, but if it fails once, we'll never
-            // invoke it again without this.
-            jt9.SetRunEnable(false);
-            jt9.DecodeFinished();
-        }
-
-        static const unsigned LISTEN_STARTUP_SECONDS = 1; // reset listen audio buffer this much early
-        lock_t lock(m_mutex);
-        if ((ftSecondNumber == m_TRperiod - LISTEN_STARTUP_SECONDS) && !m_resetThisInterval)
+        if (ft10thSecondNumber >= tickToTriggerDecode - 10)
         {
-            // Clock() is not called on any particular accurate time sequence.
-            // Here we have noticed that we're in the final LISTEN_STARTUP_SECONDS of m_TRperiod
-            //
-            // setup m_timepointToTruncate to mark when we want the "real" recording to start.
-            FILETIME ft;
-            ::SystemTimeToFileTime(&st, &ft); // convert to FILETIME to do arithmetic
-            ULARGE_INTEGER calc;
-            calc.HighPart = ft.dwHighDateTime;
-            calc.LowPart = ft.dwLowDateTime;
-            static unsigned long long Nsec100PerSecond = 10000000ull;
-            calc.QuadPart += LISTEN_STARTUP_SECONDS * Nsec100PerSecond; // go to FT8 startup second on the clock
-            ft.dwHighDateTime = calc.HighPart;
-            ft.dwLowDateTime = calc.LowPart;
-            SYSTEMTIME toTruncate;
-            ::FileTimeToSystemTime(&ft, &toTruncate);
-            toTruncate.wMilliseconds = 0;   // take away the fraction to be on the exact second
-            ::SystemTimeToFileTime(&toTruncate, &ft);
-            // ft is now the exact second specified by FT8...but lets start the sound a little early.
-            calc.HighPart = ft.dwHighDateTime;
-            calc.LowPart = ft.dwLowDateTime;
-            static const unsigned long long FtimePerMsec = 10000ull;
-            calc.QuadPart -= m_StartDecodeBeforeUtcZeroMsec * FtimePerMsec; 
-            m_timepointToTruncate = calc;
-            m_clipSoundToTimepoint = true;
+            if (!m_runEnabledThisInterval)
+            {   // the second before we trigger decode, reset the decoder...
+                // ...should not be needed, but if it fails once, we'll never
+                // invoke it again without this.
+                jt9.SetRunEnable(false);
+                jt9.DecodeFinished();
+                m_runEnabledThisInterval = true;
+            }
+            else if (ft10thSecondNumber >= tickToTriggerDecode)
+                invokedDecode = Decode(f, jt9, m_FtCycleNumber, m_DefaultDecodeShiftMsec);
+        }
+        else
+            m_runEnabledThisInterval = false;
+
+        static const unsigned LISTEN_STARTUP_TENTHSECONDS = 10; // reset listen audio buffer this much early
+        lock_t lock(m_mutex);
+        if (ft10thSecondNumber >= m_TRperiodTenths - LISTEN_STARTUP_TENTHSECONDS)
+        {
+            if (!m_resetThisInterval)
+            {
+                // Clock() is not called on any particular accurate time sequence.
+                // Here we have noticed that we're in the final LISTEN_STARTUP_TENTHSECONDS of m_TRperiodTenths
+                //
+                // setup m_timepointToTruncate to mark when we want the "real" recording to start.
+                FILETIME ft;
+                ::SystemTimeToFileTime(&st, &ft); // convert to FILETIME to do arithmetic
+                ULARGE_INTEGER calc;
+                calc.HighPart = ft.dwHighDateTime;
+                calc.LowPart = ft.dwLowDateTime;
+                static unsigned long long Nsec100PerTenthSecond = 1000000ull;
+                calc.QuadPart += LISTEN_STARTUP_TENTHSECONDS * Nsec100PerTenthSecond; // go to FT8 startup second on the clock
+                ft.dwHighDateTime = calc.HighPart;
+                ft.dwLowDateTime = calc.LowPart;
+                SYSTEMTIME toTruncate;
+                ::FileTimeToSystemTime(&ft, &toTruncate);
+                toTruncate.wMilliseconds = 0;   // take away the fraction to be on the exact second
+                ::SystemTimeToFileTime(&toTruncate, &ft);
+                // ft is now the exact second specified by FT8...but lets start the sound a little early.
+                calc.HighPart = ft.dwHighDateTime;
+                calc.LowPart = ft.dwLowDateTime;
+                static const unsigned long long FtimePerMsec = 10000ull;
+                calc.QuadPart -= m_StartDecodeBeforeUtcZeroMsec * FtimePerMsec;
+                m_timepointToTruncate = calc;
+                m_clipSoundToTimepoint = true;
 
 #ifdef _DEBUG
-            {
-                SYSTEMTIME stDebug;
-                ::FileTimeToSystemTime(reinterpret_cast<FILETIME*>(&m_timepointToTruncate), &stDebug);
-                stDebug.wDay += 0;
-            }
+                {
+                    SYSTEMTIME stDebug;
+                    ::FileTimeToSystemTime(reinterpret_cast<FILETIME*>(&m_timepointToTruncate), &stDebug);
+                    stDebug.wDay += 0;
+                }
 #endif
 
-            // we have toTruncate set to the time want. use it to calculate nutc;
-            int nutc = toTruncate.wHour;
-            nutc *= 100;
-            nutc += toTruncate.wMinute;
-            nutc *= 100;
-            nutc += toTruncate.wSecond;
-            m_FortranData->params.nutc = nutc;
-            m_resetThisInterval = true;
+                // we have toTruncate set to the time want. use it to calculate nutc;
+                int nutc = toTruncate.wHour;
+                nutc *= 100;
+                nutc += toTruncate.wMinute;
+                nutc *= 100;
+                nutc += toTruncate.wSecond;
+                m_FortranData->params.nutc = nutc;
+                m_resetThisInterval = true;
 
-            Reset(lock);  // FT8 signals in sync with the UTC clock
+                Reset(lock);  // FT signals in sync with the UTC clock
+            }
         }
         else
             m_resetThisInterval = false;
 
-        return ftSecondNumber;
+        return ft10thSecondNumber;
     }
 
     unsigned FtDemodImpl::GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb)
@@ -213,7 +224,7 @@ namespace XDft { namespace impl {
         float pxmax(0);
 
         lock_t l(m_mutex);
-        int trmin = m_TRperiod / 60;
+        int trmin = m_TRperiodTenths / 600;
         int k = m_decSamplesWritten;
         if (k > 0)
         {
@@ -524,12 +535,12 @@ namespace XDft { namespace impl {
         {
         case DIGI_FT4:
             m_FortranData->params.nmode = 5;
-            m_TRperiod = 6;
-            m_FortranData->params.ntrperiod = 6;
+            m_TRperiodTenths = 75;
+            m_FortranData->params.ntrperiod = 7;
             break;
         case DIGI_FT8:
             m_FortranData->params.nmode = 8;
-            m_TRperiod = 15;
+            m_TRperiodTenths = 150;
             m_FortranData->params.ntrperiod = 15;
             break;
         }

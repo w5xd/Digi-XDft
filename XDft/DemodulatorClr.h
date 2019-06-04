@@ -39,10 +39,10 @@ namespace XDft {
 		System::IntPtr Playback(WsjtExeBase ^decoderExe);
 		System::IntPtr GetRealTimeRxSink();
 		
-		// During wave file reading, call here to trigger the ft8 decoder.
-        // call at least once per second. Returns the second number for
-        // the ft8 receiver (0 through 14. 15 or higher on error)
-        unsigned Clock(unsigned tickToTriggerDecode, 
+		// During wave file reading, call here to trigger the decoder.
+        // call at least once per second. Returns the tenth-second number for
+        // the receiver (0 through 149 tenths for FT8, 150 for error)
+        unsigned Clock(unsigned tenthToTriggerDecode, 
             WsjtExeBase^wsjtExe, 
             bool %invokedDecode,
             int %cycleNumber);

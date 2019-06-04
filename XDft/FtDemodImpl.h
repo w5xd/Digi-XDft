@@ -67,9 +67,10 @@ namespace XDft {
             short m_StartDecodeBeforeUtcZeroMsec;
             unsigned short m_DefaultDecodeShiftMsec;
             int	 m_decSamplesWritten;
-            int  m_TRperiod;
+            int  m_TRperiodTenths;
             int  m_FtCycleNumber;
             bool m_resetThisInterval;
+            bool m_runEnabledThisInterval;
             bool m_clipSoundToTimepoint;;
             ULARGE_INTEGER m_timepointToTruncate;
             std::shared_ptr<XD::NativeAudioProcessor> m_nativeAudioProcessor;

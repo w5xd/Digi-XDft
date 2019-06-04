@@ -82,8 +82,7 @@ namespace XDft {
 
         namespace FT4 {
             // definition of the on-the-air protocol
-            const unsigned SAMPLES_PER_SYMBOL = 2048;
-            // MSEC_PER_SYMBOL = 2048/48000 = ~42.6666
+            const unsigned SAMPLES_PER_SYMBOL = 4 * 576;
         }
 
         static const unsigned TARGET_BUFFER_SAMPLE_COUNT = 0x1000;

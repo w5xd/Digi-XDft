@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 namespace XDftTest
 {
     /* MainForm
-     * presents controls for invoking the FT8 modem for receive.
+     * presents controls for invoking the FT8/FT4 modem for receive.
      * This form (and the entire application) is for demonstrating
      * how to call into the XDft8 to exercise its modem functions.
      * 
@@ -132,8 +132,8 @@ namespace XDftTest
         }
 
         private bool StartedRecordFileThisCycle = false;
-        uint TRIGGER_DECODE = 12; // At second #12 and later, see if we see any messages
-        uint FINAL_SECOND = 14;
+        uint TRIGGER_DECODE_TENTH = 120; // At second #12 and later, see if we see any messages
+        uint FINAL_TENTH = 140;
 
         // The XDft8 decoder, when operating in real time
         // invokes the FT8 demodulator on our clock. If we 
@@ -150,23 +150,26 @@ namespace XDftTest
             {
                 // TRIGGER_DECODE tells the demodulator whether to actually demodulate
                 bool invokedDecode = false; int cycleNumber = 0;
-                var interval = demodulator.Clock(TRIGGER_DECODE, wsjtExe, ref invokedDecode, ref cycleNumber);
+                var intervalTenth = demodulator.Clock(TRIGGER_DECODE_TENTH, wsjtExe, ref invokedDecode, ref cycleNumber);
                 // invokedDecode tells us whether it actually was able to invoke the wsjtx decoder.
                 // Some reasons it might not: interval is less than TRIGGER_DECODE.
                 // We have recently called into Clock which did invoke a decode, and that one isn't finished yet.
-                labelClock.Text = interval.ToString();
+                labelClock.Text = (intervalTenth/10).ToString();
 
-                if ((interval == FINAL_SECOND) && !StartedRecordFileThisCycle && !String.IsNullOrEmpty(RecordFileRootName) && RecordFileIteration > 0)
+                if ((intervalTenth >= FINAL_TENTH) && !String.IsNullOrEmpty(RecordFileRootName) && RecordFileIteration > 0)
                 {   // make a string of wav files if the user wants them
-                    StartedRecordFileThisCycle = true;
-                    waveDevicePlayer.StopRecording();
-                    waveDevicePlayer.StartRecordingFile(
-                        String.Format("{0}-{1:D3}.wav", RecordFileRootName, RecordFileIteration++));
+                    if (!StartedRecordFileThisCycle)
+                    {
+                        StartedRecordFileThisCycle = true;
+                        waveDevicePlayer.StopRecording();
+                        waveDevicePlayer.StartRecordingFile(
+                            String.Format("{0}-{1:D3}.wav", RecordFileRootName, RecordFileIteration++));
+                    }
                 }
                 else
                     StartedRecordFileThisCycle = false;
 
-                if (interval <= 2)
+                if (intervalTenth <= 20)
                     filterDecodes.Clear();
             }
         }
@@ -288,8 +291,8 @@ namespace XDftTest
                 return;
             }
             digiMode = sf.digiMode;
-            TRIGGER_DECODE = digiMode == XDft.DigiMode.DIGI_FT8 ? 13u : 3u;
-            FINAL_SECOND = digiMode == XDft.DigiMode.DIGI_FT8 ? 14u: 5u;
+            TRIGGER_DECODE_TENTH = digiMode == XDft.DigiMode.DIGI_FT8 ? 130u : 40u;
+            FINAL_TENTH = digiMode == XDft.DigiMode.DIGI_FT8 ? 140u: 65u;
             InitDemodulator(sf);
             var wavesIn = XD.WaveDeviceEnumerator.waveInDevices();
             foreach (var s in wavesIn)
