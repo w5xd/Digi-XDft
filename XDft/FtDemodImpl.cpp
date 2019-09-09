@@ -130,9 +130,9 @@ namespace XDft { namespace impl {
 		WsjtExe jt9, bool &invokedDecode, int &cycle)
     {
         invokedDecode = false;
-        SYSTEMTIME st;
-        GetSystemTime(&st);
-        WORD seconds10 = st.wSecond * 10 + st.wMilliseconds / 100;
+        SYSTEMTIME now;
+        GetSystemTime(&now);
+        WORD seconds10 = now.wSecond * 10 + now.wMilliseconds / 100;
         unsigned ft10thSecondNumber = seconds10 % m_TRperiodTenths;
         m_FtCycleNumber = seconds10 / m_TRperiodTenths;
         cycle = m_FtCycleNumber;
@@ -164,7 +164,7 @@ namespace XDft { namespace impl {
                 //
                 // setup m_timepointToTruncate to mark when we want the "real" recording to start.
                 FILETIME ft;
-                ::SystemTimeToFileTime(&st, &ft); // convert to FILETIME to do arithmetic
+                ::SystemTimeToFileTime(&now, &ft); // convert to FILETIME to do arithmetic
                 ULARGE_INTEGER calc;
                 calc.HighPart = ft.dwHighDateTime;
                 calc.LowPart = ft.dwLowDateTime;
@@ -174,9 +174,10 @@ namespace XDft { namespace impl {
                 ft.dwLowDateTime = calc.LowPart;
                 SYSTEMTIME toTruncate;
                 ::FileTimeToSystemTime(&ft, &toTruncate);
-                toTruncate.wMilliseconds = 0;   // take away the fraction to be on the exact second
+                int cycleNumberOfListenInterval = m_FtCycleNumber+1;
+                toTruncate.wMilliseconds = (m_TRperiodTenths % 10) * 100 * (cycleNumberOfListenInterval & 1);   // get onto the exact cycle fraction
                 ::SystemTimeToFileTime(&toTruncate, &ft);
-                // ft is now the exact second specified by FT8...but lets start the sound a little early.
+                // ft is now the exact time specified by FT4/8...but lets start the sound a little early.
                 calc.HighPart = ft.dwHighDateTime;
                 calc.LowPart = ft.dwLowDateTime;
                 static const unsigned long long FtimePerMsec = 10000ull;
