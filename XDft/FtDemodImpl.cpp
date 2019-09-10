@@ -153,33 +153,36 @@ namespace XDft { namespace impl {
         else
             m_runEnabledThisInterval = false;
 
-        static const unsigned LISTEN_STARTUP_TENTHSECONDS = 10; // reset listen audio buffer this much early
         lock_t lock(m_mutex);
-        if (ft10thSecondNumber >= m_TRperiodTenths - LISTEN_STARTUP_TENTHSECONDS)
+        if (static_cast<int>(ft10thSecondNumber) > m_TRperiodTenths - 10)
         {
             if (!m_resetThisInterval)
             {
+                static const unsigned LISTEN_STARTUP_TENTHSECONDS = 9; // reset listen audio buffer this much early
                 // Clock() is not called on any particular accurate time sequence.
-                // Here we have noticed that we're in the final LISTEN_STARTUP_TENTHSECONDS of m_TRperiodTenths
+                // Here we have noticed that we're in the final second of the cycle
                 //
                 // setup m_timepointToTruncate to mark when we want the "real" recording to start.
-                FILETIME ft;
-                ::SystemTimeToFileTime(&now, &ft); // convert to FILETIME to do arithmetic
+                FILETIME nowFt;
+                ::SystemTimeToFileTime(&now, &nowFt); // convert to FILETIME to do arithmetic
                 ULARGE_INTEGER calc;
-                calc.HighPart = ft.dwHighDateTime;
-                calc.LowPart = ft.dwLowDateTime;
+                calc.HighPart = nowFt.dwHighDateTime;
+                calc.LowPart = nowFt.dwLowDateTime;
                 static unsigned long long Nsec100PerTenthSecond = 1000000ull;
-                calc.QuadPart += LISTEN_STARTUP_TENTHSECONDS * Nsec100PerTenthSecond; // go to FT8 startup second on the clock
-                ft.dwHighDateTime = calc.HighPart;
-                ft.dwLowDateTime = calc.LowPart;
-                SYSTEMTIME toTruncate;
-                ::FileTimeToSystemTime(&ft, &toTruncate);
+                calc.QuadPart += (m_TRperiodTenths - ft10thSecondNumber) * Nsec100PerTenthSecond; // calculate FT startup second on the clock
+                FILETIME cycleBeginFt;
+                cycleBeginFt.dwHighDateTime = calc.HighPart;
+                cycleBeginFt.dwLowDateTime = calc.LowPart;
+                SYSTEMTIME cycleBegin;
+                ::FileTimeToSystemTime(&cycleBeginFt, &cycleBegin);
                 int cycleNumberOfListenInterval = m_FtCycleNumber+1;
-                toTruncate.wMilliseconds = (m_TRperiodTenths % 10) * 100 * (cycleNumberOfListenInterval & 1);   // get onto the exact cycle fraction
-                ::SystemTimeToFileTime(&toTruncate, &ft);
-                // ft is now the exact time specified by FT4/8...but lets start the sound a little early.
-                calc.HighPart = ft.dwHighDateTime;
-                calc.LowPart = ft.dwLowDateTime;
+                // all is OK in cycleBegin after we added m_TRperiodTenths EXCEPT the wMilliseconds
+                cycleBegin.wMilliseconds = (m_TRperiodTenths % 10) * 100 * (cycleNumberOfListenInterval & 1);   // get onto the exact cycle fraction
+                // cycleBegin is now the exact time specified by FT4/8...but lets start the sound a little early.
+                FILETIME toTruncateFt;
+                ::SystemTimeToFileTime(&cycleBegin, &toTruncateFt);
+                calc.HighPart = toTruncateFt.dwHighDateTime;
+                calc.LowPart = toTruncateFt.dwLowDateTime;
                 static const unsigned long long FtimePerMsec = 10000ull;
                 calc.QuadPart -= m_StartDecodeBeforeUtcZeroMsec * FtimePerMsec;
                 m_timepointToTruncate = calc;
@@ -194,11 +197,11 @@ namespace XDft { namespace impl {
 #endif
 
                 // we have toTruncate set to the time want. use it to calculate nutc;
-                int nutc = toTruncate.wHour;
+                int nutc = cycleBegin.wHour;
                 nutc *= 100;
-                nutc += toTruncate.wMinute;
+                nutc += cycleBegin.wMinute;
                 nutc *= 100;
-                nutc += toTruncate.wSecond;
+                nutc += cycleBegin.wSecond;
                 m_FortranData->params.nutc = nutc;
                 m_resetThisInterval = true;
 
