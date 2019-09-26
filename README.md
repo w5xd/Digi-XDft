@@ -13,7 +13,7 @@ See <a href='COPYING'>COPYING</a> for the license. This code depends on that pub
 This project also contains XDft8Test.exe which is an example of how to put the various pieces together into a working program.
 In addition to the submodule, you'll need the XDwsjtFT8.dll from the project <a href='https://github.com/w5xd/Digi-XDwsjt'>Digi-XDwsjt</a>.
 
-To build this project, expect to edit the .props files to reflect the disk locations of the various needed components.
+To build this project, expect to edit the .props files to reflect the disk locations of the various needed components. Boost version 1.67 is recommended. It is old, but newer versions of boost have eliminated the sha1 hash algorithm needed here.
 
 <img src='Screenshot1.png' alt='Screenshot1.png'/>
 
