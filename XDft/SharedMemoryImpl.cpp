@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "SharedMemoryImpl.h"
-#include <boost/uuid/sha1.hpp>
 #include <commons.h>
 namespace XDft { namespace impl {
     SharedMemoryImpl::SharedMemoryImpl(const std::string &key, bool useJt9)
@@ -43,6 +42,10 @@ namespace XDft { namespace impl {
         std::string memoryName = m_sharedMemoryKey;
         if (m_useJt9)
         {
+#if true
+            // obsolete boost include file: #include <boost/uuid/sha1.hpp>
+            throw std::runtime_error("Use of JT9.exe from the wsjt-x install is not supported");
+#else
             // duplicate QT's QSharedMemory name mangling for Windows....
             boost::uuids::detail::sha1 sha1;
             sha1.process_bytes(m_sharedMemoryKey.c_str(), m_sharedMemoryKey.size());
@@ -67,6 +70,7 @@ namespace XDft { namespace impl {
             }
 
             memoryName = "qipc_sharedmemory_" + filteredName + QTname;
+#endif
         }
         else
             memoryName = m_sharedMemoryKey + "-memory";
