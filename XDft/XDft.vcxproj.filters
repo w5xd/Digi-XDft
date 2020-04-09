@@ -75,6 +75,9 @@
     <ClInclude Include="XDft.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RxSinkRepeaterClr.h">
+      <Filter>clr\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="XDft.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RxSinkRepeater.cpp">
+      <Filter>clr\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
