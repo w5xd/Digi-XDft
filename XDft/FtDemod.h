@@ -6,6 +6,7 @@ namespace XDft {
     typedef std::function<void(const float *, unsigned)> AudioCbFcn_t;
 	typedef std::function<void()> AudioCompleteFcn_t;
     typedef std::function<void(const std::string &, int)> DecodeClientFcn_t;
+    typedef std::function<void()> StartDecodeCallback_t;
     enum DigiMode { DIGI_FT8, DIGI_FT4 }; // Keep same as in DemodulatorClr.h
     class FtDemod
     {
@@ -22,6 +23,7 @@ namespace XDft {
         bool DecodeAgain(const DecodeClientFcn_t&, WsjtExe, int cycleNumber, unsigned short msecOffset);
         void SetAudioSamplesCallback(const AudioCbFcn_t&, unsigned sampleInterval, unsigned sampleCount,
             void *nativeProcessor);
+        void SetStartDecodeCallback(const StartDecodeCallback_t&);
         unsigned GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb);
         void Reset();
 		void *GetRxSink(const AudioCompleteFcn_t &completion=AudioCompleteFcn_t());

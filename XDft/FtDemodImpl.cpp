@@ -365,6 +365,13 @@ namespace XDft { namespace impl {
 
         // from here to end is the magic incantation to get FT8 decoder to actually process the data
         {
+            StartDecodeCallback_t decodeFcn;
+            {
+                lock_t l(m_mutex);
+                decodeFcn = m_startDecodeFcn;
+            }
+            if (decodeFcn)
+                decodeFcn();
             lock_t l(m_mutex);
             struct dec_data *commonBlock = jt9.GetSharedMemory().GetWsjtCommonBlock();
             memcpy(commonBlock, m_FortranData.get(), sizeof(struct dec_data));
@@ -410,6 +417,12 @@ namespace XDft { namespace impl {
         if (m_nativeAudioProcessor && m_nativeAudioProcessor->Initialize(m_FortranData.get()) <= 0)
             throw std::runtime_error("Initialize Audio Processor failed");
     }
+
+    void FtDemodImpl::SetStartDecodeCallback(const StartDecodeCallback_t&f)
+    {
+        lock_t l(m_mutex);
+        m_startDecodeFcn = f;
+    }
 	
     void FtDemodImpl::set_DemodPreZeroMsec(short v)
     { m_StartDecodeBeforeUtcZeroMsec = v;    }
@@ -437,7 +450,7 @@ namespace XDft { namespace impl {
 
     void FtDemodImpl::set_nfb(int v)
     {        m_FortranData->params.nfb = v;    }
-
+  
     int FtDemodImpl::get_n2pass()
     {        return m_FortranData->params.n2pass;    }
 

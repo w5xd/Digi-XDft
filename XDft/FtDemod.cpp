@@ -71,6 +71,8 @@ namespace XDft { namespace impl {
     void FtDemod::SetAudioSamplesCallback(const AudioCbFcn_t&f, unsigned si, unsigned sc,
         void *AudioProcessor)
     {        m_impl->SetAudioSamplesCallback(f, si, sc, AudioProcessor);    }
+    void FtDemod::SetStartDecodeCallback(const StartDecodeCallback_t&f)
+    {       m_impl->SetStartDecodeCallback(f);}
     void FtDemod::set_DemodPreZeroMsec(short v)
     {  return m_impl->set_DemodPreZeroMsec(v);   }
     short FtDemod::get_DemodPreZeroMsec()

@@ -21,6 +21,10 @@ namespace XDft {
     // a for an alternative implementation. The end result is an AudioCallback
     public delegate void AudioCallback(array<float>^);
 
+    /* For the purpose of multiprocessing, the parameters can be updated at the moment
+    ** a decoder is available to run. */
+    public delegate void StartDecodeCallback();
+
     public enum class DigiMode { DIGI_FT8, DIGI_FT4 }; // keep same as FtDemod.h
 
     // class Demodulator. accepts audio input from either a device or a file and 
@@ -77,7 +81,9 @@ namespace XDft {
         property unsigned short DemodulateDefaultSoundShiftMsec { unsigned short get(); void set(unsigned short); }
 
         property DemodResult^ DemodulatorResultCallback { DemodResult^ get(); void set(DemodResult^); }
-        
+
+        property StartDecodeCallback^ DecodeCallback { StartDecodeCallback^ get(); void set(StartDecodeCallback^); } // callback to obtain frequency limits
+
         // parameters in FORTRAN common block that appear to affect FT8 decoding. names in wsjtx source
         property int nfa { int get(); void set(int); } // low frequency Hz limit
         property int nfb { int get(); void set(int); }  // high frequency Hz limit
@@ -98,5 +104,6 @@ namespace XDft {
         impl::FtDemod *m_Ft8Demod;
         DemodResult^ m_demodResult;
         AudioCallback^ m_audioSamplesCallback;
+        StartDecodeCallback^ m_decodeCallback;
 	};
 }

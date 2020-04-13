@@ -18,6 +18,7 @@ namespace XDft {
             unsigned GetSignalSpectrum(float *pSpectrum, int numPoints, float &powerDb);
             void SetAudioSamplesCallback(const AudioCbFcn_t&, unsigned sampleInterval, unsigned sampleCount,
                 void *AudioProcessor);
+            void SetStartDecodeCallback(const StartDecodeCallback_t&);
 
             void set_DemodPreZeroMsec(short);
             short get_DemodPreZeroMsec();
@@ -78,6 +79,7 @@ namespace XDft {
 			std::thread m_audioSampleCbThread;
 			bool m_audioSampleCbThreadStop;
 			std::deque <std::function<void()>> m_audioSampleCbQueue;
+            StartDecodeCallback_t m_startDecodeFcn;
 			std::condition_variable m_cond;
 			std::mutex m_mutex;
         };

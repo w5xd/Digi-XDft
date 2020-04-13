@@ -4,7 +4,67 @@
 #include "WsjtExeClr.h"
 #include "FtDemod.h"
 
+
+
 namespace XDft {
+
+    namespace {
+        // forward a std function to a C++ clr delegate
+        void ForwardDemod(const std::string &line, int cycleNumber, long long cbId)
+        {
+            DemodResult^ client =
+                System::Runtime::InteropServices::Marshal::GetDelegateForFunctionPointer<DemodResult^>
+                (System::IntPtr(cbId));
+            if (nullptr == client)
+                return;
+            try {
+                client(msclr::interop::marshal_as<System::String ^>(line), cycleNumber);
+            }
+            catch (System::Exception ^)
+            { /* ignore clr exceptions if client throws them*/
+            }
+        }
+
+        void PlaybackFinalDecode(long long cbId, impl::WsjtExe wsjt, impl::FtDemod demod)
+        {
+            impl::DecodeClientFcn_t f =
+                std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2, cbId);
+            demod.Decode(f, wsjt);
+        }
+
+        // forward a std function to a C++ clr delegate
+        void ForwardAudio(const float *paudio, unsigned count, long long cbId)
+        {
+            AudioCallback^ client =
+                System::Runtime::InteropServices::Marshal::GetDelegateForFunctionPointer<AudioCallback^>
+                (System::IntPtr(cbId));
+            if (nullptr == client)
+                return;
+            array<float> ^ar = nullptr;
+            if (count > 0)
+            {
+                ar = gcnew array<float>(static_cast<int>(count));
+                pin_ptr<float> pnative = &ar[0];
+                for (unsigned i = 0; i < count; i++)
+                    pnative[i] = *paudio++;
+            }
+            client(ar);
+        }
+
+        void ForwardStartDecode(long long cbId)
+        {
+            StartDecodeCallback^ cb =
+                System::Runtime::InteropServices::Marshal::GetDelegateForFunctionPointer<StartDecodeCallback^>(System::IntPtr(cbId));
+            if (nullptr == cb)
+                return;
+            try {
+                cb();
+            }
+            catch (System::Exception ^)
+            { /* ignore clr exceptions if client throws them*/
+            }
+        }
+    }
 
 	Demodulator::Demodulator()
 		: m_Ft8Demod(new impl::FtDemod())
@@ -26,6 +86,26 @@ namespace XDft {
         m_demodResult = cb;
     }
 
+    DemodResult^ Demodulator::DemodulatorResultCallback::get()
+    {
+        return m_demodResult;
+    }
+
+    void Demodulator::DecodeCallback::set(StartDecodeCallback^cb)
+    {
+        m_decodeCallback = cb;
+        impl::StartDecodeCallback_t f;
+        if (nullptr != cb)
+            f = std::bind(&ForwardStartDecode, 
+                System::Runtime::InteropServices::Marshal::GetFunctionPointerForDelegate <StartDecodeCallback^>(cb).ToInt64());
+        m_Ft8Demod->SetStartDecodeCallback(f);
+   }
+
+    StartDecodeCallback^ Demodulator::DecodeCallback::get()
+    {
+        return m_decodeCallback;
+    }
+
 	System::IntPtr Demodulator::GetRealTimeRxSink()
 	{
 		m_Ft8Demod->SetDiskDat(false);
@@ -33,33 +113,6 @@ namespace XDft {
 		return System::IntPtr(m_Ft8Demod->GetRxSink()); // caller owns memory
 	}
 
-    DemodResult^ Demodulator::DemodulatorResultCallback::get()
-    {
-        return m_demodResult;
-    }
-
-    // forward a std function to a C++ clr delegate
-    void ForwardDemod(const std::string &line, int cycleNumber, long long cbId)
-    {
-        DemodResult^ client =
-            System::Runtime::InteropServices::Marshal::GetDelegateForFunctionPointer<DemodResult^>
-            (System::IntPtr(cbId));
-        if (nullptr == client)
-            return;
-        try {
-            client(msclr::interop::marshal_as<System::String ^>(line), cycleNumber);
-        }
-        catch (System::Exception ^)
-        { /* ignore clr exceptions if client throws them*/
-        }
-    }
-
-	void PlaybackFinalDecode(long long cbId, impl::WsjtExe wsjt, impl::FtDemod demod)
-	{
-        impl::DecodeClientFcn_t f =
-            std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2, cbId );
-        demod.Decode(f, wsjt);
-	}
 
 	System::IntPtr Demodulator::Playback(WsjtExeBase ^wsjt)
 	{
@@ -89,24 +142,6 @@ namespace XDft {
         }
 	}
 
-    // forward a std function to a C++ clr delegate
-    static void ForwardAudio(const float *paudio, unsigned count, long long cbId)
-    {
-        AudioCallback^ client =
-            System::Runtime::InteropServices::Marshal::GetDelegateForFunctionPointer<AudioCallback^>
-            (System::IntPtr(cbId));
-        if (nullptr == client)
-            return;
-		array<float> ^ar = nullptr;
-		if (count > 0)
-		{
-			ar = gcnew array<float>(static_cast<int>(count));
-            pin_ptr<float> pnative = &ar[0];
-            for (unsigned i = 0; i < count; i++)
-                pnative[i] = *paudio++;
-        }
-        client(ar);
-    }
 
     void Demodulator::SetAudioSamplesCallback(AudioCallback^cb, unsigned sampleInterval, unsigned sampleCount,
         System::IntPtr nativeProcessor)
@@ -137,7 +172,7 @@ namespace XDft {
                 if (nullptr != m_demodResult)
                     f = std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2,
                         System::Runtime::InteropServices::Marshal::
-                        GetFunctionPointerForDelegate <DemodResult^>(m_demodResult).ToInt64());
+                            GetFunctionPointerForDelegate <DemodResult^>(m_demodResult).ToInt64());
                 bool didDecode = false; int cycle = 0;
                 unsigned ret = m_Ft8Demod->Clock(tick, f, wsjt->GetImpl(), didDecode, cycle);
                 invokedDecode = didDecode;
@@ -162,7 +197,7 @@ namespace XDft {
                 if (nullptr != m_demodResult)
                     f = std::bind(&ForwardDemod, std::placeholders::_1, std::placeholders::_2,
                         System::Runtime::InteropServices::Marshal::
-                        GetFunctionPointerForDelegate <DemodResult^>(m_demodResult).ToInt64());
+                            GetFunctionPointerForDelegate <DemodResult^>(m_demodResult).ToInt64());
                 return m_Ft8Demod->DecodeAgain(f, wsjt->GetImpl(), cycleNumber, msecOffset);
             }
             return false;
@@ -215,6 +250,7 @@ namespace XDft {
         if (m_Ft8Demod->IsValid())
             m_Ft8Demod->set_DefaultDecodeShiftMsec(v);
     }
+
     int Demodulator::nfa::get() {
         if (m_Ft8Demod->IsValid())
             return m_Ft8Demod->get_nfa();
