@@ -41,6 +41,16 @@ namespace XDft { namespace impl {
         memset(m_FortranData->params.mygrid, ' ', sizeof(m_FortranData->params.mygrid));
         memset(m_FortranData->params.hisgrid, ' ', sizeof(m_FortranData->params.hisgrid));
         memset(m_FortranData->params.datetime, ' ', sizeof(m_FortranData->params.datetime));
+
+        // put current time stamp in nutc so the very first decodes don't have 000000
+        SYSTEMTIME st;
+        ::GetSystemTime(&st);
+        int nutc = st.wHour;
+        nutc *= 100;
+        nutc += st.wMinute;
+        nutc *= 100;
+        nutc += st.wSecond;
+        m_FortranData->params.nutc = nutc;
     }
 
 	FtDemodImpl::~FtDemodImpl()
