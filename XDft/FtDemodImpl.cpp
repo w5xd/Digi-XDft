@@ -33,7 +33,6 @@ namespace XDft { namespace impl {
         m_FortranData->params.npts8 = 21600; // from spying
         m_FortranData->params.ndepth = 1;
         m_FortranData->params.lft8apon = false;
-        m_FortranData->params.nzhsym = 50; // setup in mainwindow.cpp
         m_FortranData->params.nagain = false;
 		m_FortranData->params.nmode = 8; // FT8
         memset(m_FortranData->params.mycall, ' ', sizeof(m_FortranData->params.mycall));
@@ -260,7 +259,7 @@ namespace XDft { namespace impl {
     // wav file playback or real time audio calls here.
 	bool FtDemodImpl::AddMonoSoundFrames12KHz(const short *p, unsigned nSamples)
 	{
-		static const unsigned capacitySamples = sizeof(dec_data.d2) / sizeof(dec_data.d2[0]);
+		static const unsigned capacitySamples = sizeof(dec_data::d2) / sizeof(dec_data::d2[0]);
 		lock_t l(m_mutex);
 		unsigned availableSamples = capacitySamples - m_decSamplesWritten;
 		bool retval = availableSamples >= nSamples;
@@ -290,7 +289,7 @@ namespace XDft { namespace impl {
 						if (samplesToRemain > 0)
 							memmove(&m_FortranData->d2[0],
 								&m_FortranData->d2[m_decSamplesWritten - samplesToRemain],
-								samplesToRemain * sizeof(dec_data.d2[0]));
+								samplesToRemain * sizeof(dec_data::d2[0]));
 						m_decSamplesWritten = samplesToRemain;
 						m_lastCalledBackIndex = 0;
 					}
@@ -390,12 +389,12 @@ namespace XDft { namespace impl {
             if ((samplesToRemove != 0) && (commonBlock->params.kin > static_cast<int>(samplesToRemove)))
             {
                 memmove(&commonBlock->d2[0], &commonBlock->d2[samplesToRemove], 
-                    sizeof(dec_data.d2[0]) * (commonBlock->params.kin - samplesToRemove));
+                    sizeof(dec_data::d2[0]) * (commonBlock->params.kin - samplesToRemove));
                 commonBlock->params.kin -= samplesToRemove;
-                memset(&commonBlock->d2[commonBlock->params.kin], 0, samplesToRemove * sizeof(dec_data.d2[0]));
+                memset(&commonBlock->d2[commonBlock->params.kin], 0, samplesToRemove * sizeof(dec_data::d2[0]));
             }
             m_FortranData->params.newdat = false;
-        }
+         }
 
 		jt9.SetRunEnable(true);
         return true;
