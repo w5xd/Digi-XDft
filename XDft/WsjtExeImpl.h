@@ -41,6 +41,7 @@ namespace XDft {
             bool CreatePipes();
             void CloseAllHandles();
             void ChildStdOutReadThread();
+            void ChildStdErrReadThread();
             virtual void SetQuit(bool);
             virtual void ProcessStarting(const std::wstring &tempDir, WsjtSharedMemory sm)=0;
 
@@ -51,8 +52,11 @@ namespace XDft {
             HANDLE m_hChildStd_IN_Wr;
             HANDLE m_hChildStd_OUT_Rd;
             HANDLE m_hChildStd_OUT_Wr;
+            HANDLE m_hChildStd_ERR_Rd;
+            HANDLE m_hChildStd_ERR_Wr;
 
             std::thread m_readThread;
+            std::thread m_readErrThread;
             std::vector<char> m_readThreadBuf;
             mutable std::mutex m_mutex;
             std::condition_variable m_cond;
