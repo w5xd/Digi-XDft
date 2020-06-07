@@ -54,8 +54,8 @@ namespace XDftTest
 
         private void SetupForm_Load(object sender, EventArgs e)
         {
-            textBoxIntro.Text = "Copyright (c) 2019 by Wayne Wright, W5XD\r\n\r\n" +
-                "This program is based on wsjtx-2.0.1 which is licensed software. " +
+            textBoxIntro.Text = "Copyright (c) 2020 by Wayne Wright, W5XD\r\n\r\n" +
+                "This program is based on wsjtx-2.2.1 which is licensed software. " +
                 "See the file COPYING.\r\n\r\n" +
 
 "The algorithms, source code, look-and-feel of WSJT-X and related"+
