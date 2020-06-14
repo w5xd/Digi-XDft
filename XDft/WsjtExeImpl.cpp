@@ -330,7 +330,7 @@ namespace XDft { namespace impl {
     bool WsjtExeImplBase::DecodeInProgress() const
     {
         if (WAIT_OBJECT_0 == WaitForSingleObject(m_pi.hProcess, 0))
-            throw std::runtime_error(WideToMultiByte(m_exeName) + " process has exited");
+            throw WsjtExe::WsjtExeExited(WideToMultiByte(m_exeName) + " process has exited");
         lock_t l(m_mutex);
         if (static_cast<bool>(m_decodeLineFcn))
             return true;

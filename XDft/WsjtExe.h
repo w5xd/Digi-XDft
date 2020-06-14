@@ -7,6 +7,11 @@ namespace XDft {
         class WsjtExe
         {
         public:
+            class WsjtExeExited : public std::runtime_error 
+            {
+            public:
+                WsjtExeExited(const std::string &m);
+            };
             enum ExeType_t { RUN_JT9, RUN_XDFT8DEMOD };
             WsjtExe(ExeType_t);
             WsjtExe();

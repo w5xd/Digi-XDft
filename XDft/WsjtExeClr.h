@@ -9,6 +9,10 @@ namespace XDft {
     public ref class WsjtExeBase
     {
     public:
+        ref class XDftDemodExitException : public System::Exception {
+        public:
+            XDftDemodExitException(const std::string &msg);
+        };
         ~WsjtExeBase();
         !WsjtExeBase();
 

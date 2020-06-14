@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
     std::string sharedMemoryKey;
 
 #ifdef _DEBUG
+    int ExitAfterSoManyDecodeCalls = 0;
     ::MessageBoxA(0, "Debug from here", argc > 0? argv[0] : "", 0);
 #endif
 
@@ -78,7 +79,6 @@ int main(int argc, char *argv[])
             if (i < argc)
                 sharedMemoryKey = argv[i];
         }
-
     }
 
     struct dec_data *pFortanCommon = 0;
@@ -149,6 +149,10 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
+#ifdef _DEBUG
+        if (ExitAfterSoManyDecodeCalls > 0 && --ExitAfterSoManyDecodeCalls == 0)
+            break;
+#endif
         if (!events.empty())
         {
             auto waitResult = ::WaitForMultipleObjects(

@@ -37,5 +37,6 @@ namespace XDft { namespace impl {
     void WsjtExe::DecodeFinished()const { m_impl->DecodeFinished(); }
     WsjtSharedMemory WsjtExe::GetSharedMemory() { return m_impl->GetSharedMemory(); }
     void WsjtExe::Shutdown() { m_impl->Shutdown(); }
+    WsjtExe::WsjtExeExited::WsjtExeExited(const std::string &m) : std::runtime_error(m) {}
 
 }}
