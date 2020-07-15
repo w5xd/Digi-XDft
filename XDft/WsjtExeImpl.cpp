@@ -26,6 +26,8 @@ namespace XDft { namespace impl {
         , m_hChildStd_IN_Wr(0)
         , m_hChildStd_OUT_Rd(0)
         , m_hChildStd_OUT_Wr(0)
+        , m_hChildStd_ERR_Rd(0)
+        , m_hChildStd_ERR_Wr(0)
         , m_stop(false)
         , m_running(false)
         , m_decodeNotifiedFinished(true)
@@ -46,8 +48,14 @@ namespace XDft { namespace impl {
         if (!CreatePipe(&m_hChildStd_OUT_Rd, &m_hChildStd_OUT_Wr, &saAttr, 0))
             throw std::runtime_error("Failed to create pipe for child STDOUT");;
 
+        if (!CreatePipe(&m_hChildStd_ERR_Rd, &m_hChildStd_ERR_Wr, &saAttr, 0))
+            throw std::runtime_error("Failed to create pipe for child STDERR");;
+
 		// Ensure the read handle to the pipe for STDOUT is not inherited.
 		if (!SetHandleInformation(m_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+			return false;
+
+		if (!SetHandleInformation(m_hChildStd_ERR_Rd, HANDLE_FLAG_INHERIT, 0))
 			return false;
 
 		// Create a pipe for the child process's STDIN. 
@@ -71,10 +79,7 @@ namespace XDft { namespace impl {
 
 		STARTUPINFOW         si = { 0 };
 		si.cb = sizeof(si);
-        // we get both the child's stdout and stderr
-        // on the same file handle. Can't tell one
-        // from the other, but don't need to.
-		si.hStdError = m_hChildStd_OUT_Wr;
+		si.hStdError = m_hChildStd_ERR_Wr;
 		si.hStdOutput = m_hChildStd_OUT_Wr;
 		si.hStdInput = m_hChildStd_IN_Rd;
 		si.dwFlags |= STARTF_USESTDHANDLES;
@@ -148,6 +153,7 @@ namespace XDft { namespace impl {
 		m_readThread = std::thread(std::bind(&WsjtExeImplBase::ChildStdOutReadThread, this));
 		while (m_running == 0)
 			m_cond.wait(l);
+		m_readErrThread = std::thread(std::bind(&WsjtExeImplBase::ChildStdErrReadThread, this));
         m_sharedMemory = sm;
 		return true;
 	}
@@ -198,12 +204,24 @@ namespace XDft { namespace impl {
 			ch = CloseHandle(m_hChildStd_OUT_Rd);
 		}
 		m_hChildStd_OUT_Rd = 0;
+		if (m_hChildStd_ERR_Rd)
+		{
+			::CancelIoEx(m_hChildStd_ERR_Rd, 0);
+			ch = CloseHandle(m_hChildStd_ERR_Rd);
+		}
+		m_hChildStd_ERR_Rd = 0;
 		if (m_hChildStd_OUT_Wr)
 		{
 			::CancelIoEx(m_hChildStd_OUT_Wr, 0);
 			ch = CloseHandle(m_hChildStd_OUT_Wr);
 		}
 		m_hChildStd_OUT_Wr = 0;
+		if (m_hChildStd_ERR_Wr)
+		{
+			::CancelIoEx(m_hChildStd_ERR_Wr, 0);
+			ch = CloseHandle(m_hChildStd_ERR_Wr);
+		}
+		m_hChildStd_ERR_Wr = 0;
 
 		{
 			lock_t l(m_mutex);
@@ -212,7 +230,44 @@ namespace XDft { namespace impl {
 		}
 		if (m_readThread.joinable())
 			m_readThread.join();
+		if (m_readErrThread.joinable())
+			m_readErrThread.join();
 	}
+
+    void WsjtExeImplBase::ChildStdErrReadThread()
+    {
+		{
+			lock_t l(m_mutex);
+			m_running += 1;
+			m_cond.notify_all();
+		}
+		std::vector<char> readThreadBuf(1024);
+        for (;;)
+        {
+			DWORD nbr;
+			if (!ReadFile(m_hChildStd_ERR_Rd, &readThreadBuf[0], static_cast<int>(readThreadBuf.size()), &nbr, 0))
+				break;
+#ifdef _DEBUG
+            // in FORTRAN, the code may do:
+            //      use ISO_FORTRAN_ENV
+            //      write(ERROR_UNIT, *) "debug message"
+            if (nbr > 0)
+            {
+                std::ostringstream oss;
+                oss << "Child stderr=\"";
+                for (unsigned i = 0; i < nbr; i++)
+                    oss << readThreadBuf[i];
+                oss << '"' << std::endl;
+                ::OutputDebugStringA(oss.str().c_str());
+            }
+#endif
+        }
+        {
+			lock_t l(m_mutex);
+			m_running -= 1;
+			m_cond.notify_all();
+		}
+    }
 
 	void WsjtExeImplBase::ChildStdOutReadThread()
 	{
@@ -275,7 +330,7 @@ namespace XDft { namespace impl {
     bool WsjtExeImplBase::DecodeInProgress() const
     {
         if (WAIT_OBJECT_0 == WaitForSingleObject(m_pi.hProcess, 0))
-            throw std::runtime_error(WideToMultiByte(m_exeName) + " process has exited");
+            throw WsjtExe::WsjtExeExited(WideToMultiByte(m_exeName) + " process has exited");
         lock_t l(m_mutex);
         if (static_cast<bool>(m_decodeLineFcn))
             return true;

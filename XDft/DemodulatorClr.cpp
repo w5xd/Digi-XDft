@@ -113,7 +113,6 @@ namespace XDft {
 		return System::IntPtr(m_Ft8Demod->GetRxSink()); // caller owns memory
 	}
 
-
 	System::IntPtr Demodulator::Playback(WsjtExeBase ^wsjt)
 	{
         try {
@@ -141,7 +140,6 @@ namespace XDft {
             throw gcnew System::Exception(gcnew System::String(e.what()));
         }
 	}
-
 
     void Demodulator::SetAudioSamplesCallback(AudioCallback^cb, unsigned sampleInterval, unsigned sampleCount,
         System::IntPtr nativeProcessor)
@@ -179,12 +177,12 @@ namespace XDft {
                 cycleNumber = cycle;
                 return ret;
             }
-            return 15;
+            return 15; //invalid in any mode
         }
+        catch (const impl::WsjtExe::WsjtExeExited &e)
+        {  throw gcnew WsjtExeBase::XDftDemodExitException(e.what());    }
         catch (const std::exception &e)
-        {
-            throw gcnew System::Exception(gcnew System::String(e.what()));
-        }
+        { throw gcnew System::Exception(gcnew System::String(e.what())); }
     }
 
     bool Demodulator::DecodeAgain(WsjtExeBase ^wsjt, int cycleNumber, unsigned short msecOffset)

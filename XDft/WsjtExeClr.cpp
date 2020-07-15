@@ -45,4 +45,7 @@ namespace XDft {
     System::String^ Jt9Exe::WsjtBinPath::get() { return msclr::interop::marshal_as<System::String ^>(m_impl->GetBinPath()); }
     void Jt9Exe::ExeName::set(System::String^v) { m_impl->SetExeName(msclr::interop::marshal_as<std::wstring>(v)); }
     System::String^ Jt9Exe::ExeName::get() { return msclr::interop::marshal_as<System::String ^>(m_impl->GetExeName()); }
+
+    WsjtExeBase::XDftDemodExitException::XDftDemodExitException(const std::string &msg) : System::Exception(gcnew System::String(msg.c_str()))
+    { }
 }

@@ -54,16 +54,17 @@ namespace XDftTest
 
         private void SetupForm_Load(object sender, EventArgs e)
         {
-            textBoxIntro.Text = "Copyright (c) 2019 by Wayne Wright, W5XD\r\n\r\n" +
-                "This program is based on wsjtx-2.0.1 which is licensed software. " +
+            textBoxIntro.Text = "Copyright (c) 2020 by Wayne Wright, W5XD\r\n\r\n" +
+                "This program is based on wsjtx-2.2.1 which is licensed software. " +
                 "See the file COPYING.\r\n\r\n" +
 
-"The algorithms, source code, look-and-feel of WSJT-X and related programs, and" +
-" protocol specifications for the modes FSK441, FT8, JT4, JT6M JT9, JT65, JTMS, QRA64," +
-" ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the following authors:" +
-" Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo," +
-" IV3NWV; Grea Bream, KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR; Philip Karn," +
-" KA9Q; and other members of the WSJT Development Group.\r\n\r\n" +
+"The algorithms, source code, look-and-feel of WSJT-X and related"+
+" programs, and protocol specifications for the modes FSK441, FT8, JT4,"+
+" JT6M, JT9, JT65, JTMS, QRA64, ISCAT, MSK144 are Copyright (C)" +
+" 2001-2020 by one or more of the following authors: Joseph Taylor,"+ 
+" K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo,"+
+" IV3NWV; Greg Beam, KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR;"+
+" Philip Karn, KA9Q; and other members of the WSJT Development Group.\r\nr\n" +
 
 "The assembly under test, named XDft.dll, is authored and published by Wayne, W5XD. " +
 "This assembly presents a progammer's interface into a subset of the wsjtx feature set. In particular, " +
