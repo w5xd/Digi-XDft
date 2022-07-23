@@ -59,8 +59,8 @@ namespace XDft { namespace impl {
 	void FtDemod::SetDiskDat(bool v) { m_impl->SetDiskDat(v); }
 	bool FtDemod::AddMonoSoundFrames12KHz(const short *p, unsigned count)
 	{		return m_impl->AddMonoSoundFrames12KHz(p, count);	}
-	void FtDemod::Decode(const DecodeClientFcn_t &f, WsjtExe ex)const
-	{		m_impl->Decode(f, ex, m_impl->CycleNumber());	}
+	void FtDemod::Decode(const DecodeClientFcn_t &f, WsjtExe ex, unsigned short atOffsetMsec)const
+	{		m_impl->Decode(f, ex, m_impl->CycleNumber(), atOffsetMsec);	}
     unsigned FtDemod::Clock(unsigned t, const DecodeClientFcn_t &f, WsjtExe ex, 
         bool &invokedDecode, int &cy)
     {       return m_impl->Clock(t, f, ex, invokedDecode, cy);    }

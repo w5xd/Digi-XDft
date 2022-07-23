@@ -183,6 +183,33 @@ namespace XDftTest
         // level fools it. You are invited to make your application smarter than that.
         private Dictionary<String, bool> filterDecodes = new Dictionary<string, bool>();
 
+        private String keyForFilterDecodes(String s)
+        {   // looking for redundant decodes, remove the time delay, frequency, signal strength,
+            // and all characters beyond 43 to match those already decoded.
+            char[] space = { ' ' };
+            int[] skip = { 1, 2, 3 };
+            var lookup = skip.ToList();
+            if (s.Length > 43)
+                s = s.Substring(0, 43);
+            var spl = s.Split(space, StringSplitOptions.RemoveEmptyEntries);
+            String ret = "";
+            int i = 0;
+            foreach (var w in spl)
+            {
+                if (!lookup.Contains(i))
+                {
+                    if (ret.Any())
+                        ret += ' ';
+                    ret += w;
+                }
+                i += 1;
+            }
+            return ret;
+        }
+
+        private delegate string MultiplePlayDelegate();
+        MultiplePlayDelegate PlayAgain = null;
+
         private void OnReceived(String s, int cycle)
         {   // When the FT8 decoder is invoked, it may find 
             // multiple signals in the stream. Each is notified by
@@ -192,22 +219,32 @@ namespace XDftTest
             {
                 bool redundant = checkBoxPresentRedundant.Checked;
                 bool val = false;
-                if (redundant || !filterDecodes.TryGetValue(s, out val))
+                var key = keyForFilterDecodes(s);
+                if (redundant || !filterDecodes.TryGetValue(key, out val))
                 {
                     listBoxReceived.Items.Add(s);
                     if (!redundant)
-                        filterDecodes[s] = true;
+                        filterDecodes[key] = true;
                     int visibleItems = listBoxReceived.ClientSize.Height / listBoxReceived.ItemHeight;
                     listBoxReceived.TopIndex = Math.Max(listBoxReceived.Items.Count - visibleItems + 1, 0);
                     int v = s.IndexOf("~  ");
                     if (v >= 0)
                     {   // if the message has been through FT8's 77bit pack/unpack
-                        string msg = s.Substring(v+3);
+                        string msg = s.Substring(v + 3);
                         int i3 = 0; int n3 = 0;
                         bool[] c77 = null;
                         XDft.Generator.pack77(msg, ref i3, ref n3, ref c77);
                         // have a look at the packing type. i3 and n3
                     }
+                }
+            }
+            else
+            {   // to play at multiple time delays.
+                if (null != PlayAgain)
+                {
+                    var ds = PlayAgain();
+                    if (ds != null)
+                        listBoxReceived.Items.Add(ds);
                 }
             }
         }
@@ -406,6 +443,25 @@ namespace XDftTest
            }
         }
 
+        private String PlayAtOffset(String fn, uint channel, XDft.WsjtExe wsjtExe, List<ushort> PlayOffsets)
+        {
+            PlayAgain = null;
+            if (null == PlayOffsets || !PlayOffsets.Any())
+                return null;
+            var thisOffset = PlayOffsets[0];
+            PlayOffsets.RemoveAt(0);
+            // The .Play() call below returns immediately, but the play is not finished. PlayAgain does the subsequent delays
+            if (PlayOffsets.Any()) // arrange to play at remaining time delays
+                PlayAgain = () => PlayAtOffset(fn, channel, wsjtExe, PlayOffsets);
+            XD.WaveFilePlayer.Play(fn, channel, demodulator.Playback(wsjtExe, thisOffset));
+            if (thisOffset != 0)
+            {   // leave a mention in the results that we are playing again with changed time origin.
+                float seconds = thisOffset * .001f;
+                return String.Format("Offset = {0:0.0}", seconds);
+            }
+            return null;
+        }
+
         private void buttonPlayFile_Click(object sender, EventArgs e)
         {
             var fd = new OpenFileDialog();
@@ -415,7 +471,20 @@ namespace XDftTest
             {
                 uint channel = radioButtonInputLeft.Checked ? 0u : 1u;
                 SetDecodeFrequencyRange();
-                XD.WaveFilePlayer.Play(fd.FileName, channel, demodulator.Playback(wsjtExe));
+                List<ushort> PlayOffsets = new List<ushort>();
+                PlayOffsets.Add(0);
+                switch (digiMode)
+                {
+                    case XDft.DigiMode.DIGI_FT8:
+                        PlayOffsets.Add(500);
+                        PlayOffsets.Add(1000);
+                        break;
+                    case XDft.DigiMode.DIGI_FT4:
+                        PlayOffsets.Add(100);
+                        PlayOffsets.Add(200);
+                        break;
+                }
+                PlayAtOffset(fd.FileName, channel, wsjtExe, PlayOffsets);
             }
         }
 

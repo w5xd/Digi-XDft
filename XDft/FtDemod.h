@@ -17,7 +17,7 @@ namespace XDft {
         void SetDiskDat(bool);
         bool AddMonoSoundFrames12KHz(const short *p, unsigned count);
 
-        void Decode(const DecodeClientFcn_t&, WsjtExe)const;
+        void Decode(const DecodeClientFcn_t&, WsjtExe, unsigned short atOffsetMsec = 0)const;
         unsigned Clock(unsigned tickToTrigger, const DecodeClientFcn_t&, WsjtExe, 
             bool &invokedDecode, int &cycleNumber);
         bool DecodeAgain(const DecodeClientFcn_t&, WsjtExe, int cycleNumber, unsigned short msecOffset);

@@ -40,8 +40,9 @@ namespace XDft {
 		// GetRealTimeRxSink is for real time decoding of an audio stream.
 		// It is up to the caller to only Decode one stream at a time...
 		// and to pass the IntPtr to a native RxAudioSink client calls ReleaseSink.
-		System::IntPtr Playback(WsjtExeBase ^decoderExe);
-		System::IntPtr GetRealTimeRxSink();
+		System::IntPtr Playback(WsjtExeBase ^decoderExe, unsigned short offsetMsec);
+        System::IntPtr Playback(WsjtExeBase^ decoderExe);
+        System::IntPtr GetRealTimeRxSink();
 		
 		// During wave file reading, call here to trigger the decoder.
         // call at least once per second. Returns the tenth-second number for
