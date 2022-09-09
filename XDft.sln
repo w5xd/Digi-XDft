@@ -15,7 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XDAudioDevice", "Digi-XD\XD
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XDftRxAudioProcess", "Digi-XD\XDftRxAudioProcess\XDftRxAudioProcess.vcxproj", "{4B0BE85A-8399-437F-9CD0-DD19A354A529}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XDpack77Message", "Digi-XD\XDpack77Message\XDpack77Message.csproj", "{25F64B99-8014-4B83-92EA-424FDBD6E919}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XDpack77Message", "XDpack77Message\XDpack77Message.csproj", "{25F64B99-8014-4B83-92EA-424FDBD6E919}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

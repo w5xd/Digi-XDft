@@ -153,7 +153,7 @@
       <Project>{4b0be85a-8399-437f-9cd0-dd19a354a529}</Project>
       <Name>XDftRxAudioProcess</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Digi-XD\XDpack77Message\XDpack77Message.csproj">
+    <ProjectReference Include="..\XDpack77Message\XDpack77Message.csproj">
       <Project>{25f64b99-8014-4b83-92ea-424fdbd6e919}</Project>
       <Name>XDpack77Message</Name>
     </ProjectReference>
