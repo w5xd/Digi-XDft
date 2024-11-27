@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyCopyright("Copyright © 2022 Wayne E. Wright, W5XD")]
+[assembly: AssemblyCopyright("Copyright © 2024 Wayne E. Wright, W5XD")]
 
 
 [assembly: AssemblyVersion("2.6.0.1")]
